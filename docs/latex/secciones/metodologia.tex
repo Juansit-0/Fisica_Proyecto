@@ -1,0 +1,92 @@
+%===============================================================================
+% metodologia.tex
+% Capítulo 3: Metodología y Arquitectura Computacional
+%===============================================================================
+
+\chapter{Metodología y Arquitectura Computacional}
+\label{cap:metodologia}
+
+La metodología seguida en este proyecto se basa en las especificaciones proporcionadas en el enunciado del curso \cite{proyecto-molina2024}.
+
+\section{Arquitectura Híbrida: Fortran + Python}
+El proyecto utiliza una arquitectura de \textit{pipeline científico} que combina dos lenguajes de programación para aprovechar sus fortalezas:
+
+\begin{itemize}
+    \item \textbf{Fortran 90}: Para el núcleo numérico y la simulación principal. Ofrece alto rendimiento en bucles matemáticos y es el estándar en computación de alto rendimiento (HPC).
+    \item \textbf{Python}: Para el post-procesamiento, análisis estadístico y generación de visualizaciones. Cuenta con un ecosistema robusto de bibliotecas científicas (NumPy, Matplotlib, Pandas).
+\end{itemize}
+
+Esta separación de responsabilidades permite desacoplar la carga computacional intensiva de la fase de visualización, logrando un rendimiento óptimo.
+
+\section{Estructura del Proyecto}
+La organización del código sigue un patrón modular con responsabilidades claras:
+
+\begin{table}[H]
+    \centering
+    \caption{Módulos del sistema y sus responsabilidades.}
+    \label{tab:modulos}
+    \begin{tabular}{ll}
+        \toprule
+        \textbf{Módulo} & \textbf{Responsabilidad} \\
+        \midrule
+        \texttt{mod\_constants.f90} & Constantes físicas y parámetros de simulación \\
+        \texttt{mod\_types.f90} & Tipos de datos para el sistema de partículas \\
+        \texttt{mod\_energy.f90} & Cálculo de energía electrostática y potencial \\
+        \texttt{mod\_simulation.f90} & Algoritmo de minimización energética \\
+        \texttt{mod\_io.f90} & Lectura de parámetros y escritura de resultados \\
+        \texttt{main.f90} & Programa principal y coordinación del flujo \\
+        \texttt{config.py} & Configuración de visualización y rutas \\
+        \texttt{plot\_*.py} & Generación de gráficas específicas \\
+        \texttt{analysis.py} & Análisis estadístico del sistema \\
+        \texttt{video\_generator.py} & Generación de video de evolución \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\section{Parámetros de Simulación}
+Los parámetros utilizados en las simulaciones se resumen en la tabla \ref{tab:parametros}:
+
+\begin{table}[H]
+    \centering
+    \caption{Parámetros de simulación.}
+    \label{tab:parametros}
+    \begin{tabular}{lcc}
+        \toprule
+        \textbf{Parámetro} & \textbf{Simbolo} & \textbf{Valor} \\
+        \midrule
+        Número de partículas & \(N\) & 50 \\
+        Tamaño del dominio & \(L\) & 10.0 \\
+        Paso máximo de movimiento & \(\delta_{\text{max}}\) & 0.25 \\
+        Iteraciones máximas & \(N_{\text{iter}}\) & 500,000 \\
+        Parámetro de softening & \(\epsilon\) & 0.01 \\
+        Constante de Coulomb & \(k_e\) & 1.0 (unidades reducidas) \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\section{Implementación Técnica}
+
+\subsection{Inicialización del Sistema}
+El sistema se inicializa con posiciones aleatorias uniformemente distribuidas en el dominio \([-L, L] \times [-L, L]\). Las cargas se asignan según el modo seleccionado:
+\begin{itemize}
+    \item \textbf{Modo 1}: Todas las cargas son \(+1\).
+    \item \textbf{Modo 2}: Mezcla aleatoria de \(+1\) y \(-1\) con probabilidad 0.5 para cada carga.
+\end{itemize}
+
+\subsection{Estabilidad Numérica: Parámetro de Softening}
+Para evitar la singularidad cuando dos partículas se acercan demasiado (\(r \to 0\)), implementamos un parámetro de \textit{softening} \(\epsilon\):
+
+\begin{equation}
+    r_{\text{efectivo}} = \sqrt{(x_i - x_j)^2 + (y_i - y_j)^2 + \epsilon^2}
+\end{equation}
+
+Este parámetro introduce un radio mínimo efectivo sin alterar la física a distancias \(r \gg \epsilon\).
+
+\subsection{Formatos de Datos}
+Los resultados se guardan en formato CSV (Comma-Separated Values) para garantizar compatibilidad con herramientas de análisis como Pandas y NumPy. Los archivos generados son:
+\begin{itemize}
+    \item \texttt{initial\_config.csv}: Configuración inicial del sistema.
+    \item \texttt{final\_config.csv}: Configuración final de mínima energía.
+    \item \texttt{energy\_log.csv}: Registro de energía y tasa de aceptación por iteración.
+    \item \texttt{config\_XXXXXX.csv}: Configuraciones intermedias para generar el video.
+\end{itemize}

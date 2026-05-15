@@ -1,0 +1,40 @@
+%===============================================================================
+% introduccion.tex
+% Capítulo 1: Introducción
+%===============================================================================
+
+\chapter{Introducción}
+
+\section{Contexto y Problemática}
+El estudio de sistemas de partículas cargadas es fundamental en la física clásica, con aplicaciones en áreas como la electrostática, la física de plasmas, la ciencia de materiales y la astrofísica. El problema de encontrar configuraciones de mínima energía para un sistema de cargas eléctricas es un clásico problema de optimización con relevancia tanto teórica como práctica.
+
+En este proyecto, abordamos la simulación de un sistema bidimensional de cargas eléctricas puntuales que evolucionan dinámicamente buscando configuraciones de mínima energía electrostática. El desafío radica en la naturaleza computacionalmente intensiva del problema, que involucra interacciones de \(N\)-cuerpos con complejidad \(O(N^2)\) en su formulación más simple.
+
+\section{Objetivos}
+
+\subsection{Objetivo General}
+Desarrollar una simulación computacional de un sistema de cargas eléctricas que utilice un algoritmo de minimización energética para alcanzar configuraciones de equilibrio, y analizar las propiedades físicas y estadísticas del sistema.
+
+\subsection{Objetivos Específicos}
+\begin{enumerate}[label=\alph*)]
+    \item Implementar un modelo de interacción electrostática basado en la Ley de Coulomb.
+    \item Desarrollar un algoritmo de Monte Carlo a temperatura cero para la minimización de la energía.
+    \item Optimizar el rendimiento computacional reduciendo la complejidad algorítmica.
+    \item Generar visualizaciones científicas del sistema (posiciones de cargas, potencial eléctrico, campo eléctrico).
+    \item Analizar estadísticamente la evolución del sistema y las configuraciones de equilibrio.
+\end{enumerate}
+
+\section{Justificación}
+La elección de una arquitectura híbrida (Fortran + Python) responde a la necesidad de combinar alto rendimiento computacional con flexibilidad en la visualización. Fortran es ideal para el núcleo numérico debido a su eficiencia en bucles matemáticos, mientras que Python ofrece un ecosistema robusto para el post-procesamiento y la generación de gráficas.
+
+Este proyecto no solo ilustra conceptos fundamentales de electricidad y magnetismo, sino que también introduce prácticas de ingeniería de software aplicadas a la computación científica, como la modularidad, la optimización algorítmica y la reproducibilidad de resultados.
+
+\section{Estructura del Documento}
+El resto del documento se organiza de la siguiente manera:
+
+\begin{itemize}
+    \item Capítulo \ref{cap:marco_teorico}: Presenta el marco teórico de la electrostática y los métodos computacionales utilizados.
+    \item Capítulo \ref{cap:metodologia}: Describe la metodología, la arquitectura del sistema y la implementación técnica.
+    \item Capítulo \ref{cap:resultados}: Muestra y analiza los resultados obtenidos de las simulaciones.
+    \item Capítulo \ref{cap:conclusiones}: Resume las conclusiones del proyecto y propone trabajos futuros.
+\end{itemize}

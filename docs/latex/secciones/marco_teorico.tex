@@ -1,0 +1,91 @@
+%===============================================================================
+% marco_teorico.tex
+% Capítulo 2: Marco Teórico
+%===============================================================================
+
+\chapter{Marco Teórico}
+\label{cap:marco_teorico}
+
+Este capítulo se basa en las notas de clase y materiales proporcionados por el profesor Alejandro Molina \cite{carga-molina2024,potencial-molina2024,campo-molina2024,proyecto-molina2024}.
+
+\section{Ley de Coulomb}
+La interacción entre dos cargas eléctricas puntuales \(q_i\) y \(q_j\) se describe mediante la Ley de Coulomb \cite{carga-molina2024}, que establece que la fuerza entre ellas es proporcional al producto de las cargas e inversamente proporcional al cuadrado de la distancia que las separa:
+
+\begin{equation}
+    \vec{F}_{ij} = k_e \frac{q_i q_j}{|\vec{r}_i - \vec{r}_j|^2} \hat{r}_{ij}
+\end{equation}
+
+donde:
+\begin{itemize}
+    \item \(k_e = 8.9875 \times 10^9 \, \text{N·m}^2/\text{C}^2\) es la constante de Coulomb,
+    \item \(\vec{r}_i\) y \(\vec{r}_j\) son las posiciones de las cargas,
+    \item \(\hat{r}_{ij}\) es el vector unitario que apunta de \(q_j\) a \(q_i\).
+\end{itemize}
+
+\section{Energía Potencial Electrostática}
+La energía potencial electrostática total \(U\) de un sistema de \(N\) cargas es la suma de las energías potenciales de todos los pares de partículas:
+
+\begin{equation}
+    U = k_e \sum_{i=1}^{N-1} \sum_{j=i+1}^N \frac{q_i q_j}{|\vec{r}_i - \vec{r}_j|}
+    \label{eq:energia_total}
+\end{equation}
+
+Esta ecuación es la base de nuestra simulación: el sistema evoluciona buscando minimizar esta energía.
+
+\section{Potencial Eléctrico}
+El potencial eléctrico \(V(\vec{r})\) en un punto arbitrario \(\vec{r} = (x, y)\) debido a un conjunto de cargas puntuales está dado por \cite{potencial-molina2024}:
+
+\begin{equation}
+    V(\vec{r}) = k_e \sum_{i=1}^N \frac{q_i}{|\vec{r} - \vec{r}_i|}
+    \label{eq:potencial}
+\end{equation}
+
+El potencial eléctrico es una cantidad escalar que describe la "tensión" del campo eléctrico en cada punto del espacio.
+
+\section{Campo Eléctrico}
+El campo eléctrico \(\vec{E}(\vec{r})\) es la fuerza por unidad de carga que experimentaría una carga de prueba positiva en el punto \(\vec{r}\). Se relaciona con el potencial mediante \(\vec{E} = -\nabla V\) \cite{campo-molina2024}:
+
+\begin{equation}
+    \vec{E}(\vec{r}) = k_e \sum_{i=1}^N \frac{q_i (\vec{r} - \vec{r}_i)}{|\vec{r} - \vec{r}_i|^3}
+    \label{eq:campo_electrico}
+\end{equation}
+
+En dos dimensiones, descomponiendo en componentes cartesianas:
+
+\begin{equation}
+    E_x(x, y) = k_e \sum_{i=1}^N \frac{q_i (x - x_i)}{\left[(x - x_i)^2 + (y - y_i)^2 + \epsilon^2\right]^{3/2}}
+\end{equation}
+\begin{equation}
+    E_y(x, y) = k_e \sum_{i=1}^N \frac{q_i (y - y_i)}{\left[(x - x_i)^2 + (y - y_i)^2 + \epsilon^2\right]^{3/2}}
+\end{equation}
+
+donde \(\epsilon\) es el parámetro de \textit{softening} que evita la singularidad cuando \(\vec{r} \to \vec{r}_i\).
+
+\section{Método de Monte Carlo a Temperatura Cero}
+Para minimizar la energía del sistema, seguimos la metodología establecida en el proyecto del curso \cite{proyecto-molina2024}, utilizando un algoritmo de Monte Carlo a temperatura cero (\(T = 0\)), también conocido como \textit{descenso greedy} (greedy descent). El algoritmo se describe a continuación:
+
+\begin{enumerate}
+    \item Seleccionar una partícula aleatoria del sistema.
+    \item Proponer un desplazamiento aleatorio \((\delta x, \delta y)\) dentro de un intervalo \([-\delta_{\text{max}}, \delta_{\text{max}}]\).
+    \item Verificar que la nueva posición esté dentro del dominio \([-L, L] \times [-L, L]\).
+    \item Calcular el cambio en la energía \(\Delta U = U_{\text{nueva}} - U_{\text{vieja}}\).
+    \item Aceptar el movimiento solo si \(\Delta U < 0\) (la energía disminuye).
+    \item Repetir hasta alcanzar el número máximo de iteraciones o convergencia.
+\end{enumerate}
+
+A diferencia del recocido simulado (\textit{simulated annealing}), este método nunca acepta movimientos que aumenten la energía, lo que garantiza una reducción monótona pero puede quedar atrapado en mínimos locales.
+
+\section{Optimización Algorítmica: \(O(N^2)\) a \(O(N)\)}
+La ecuación \eqref{eq:energia_total} requiere \(O(N^2)\) operaciones por iteración. Sin embargo, dado que solo movemos una partícula a la vez, podemos calcular solo el cambio en la energía \(\Delta U\) en lugar de recalcular toda la energía:
+
+\begin{equation}
+    \Delta U = U_{\text{contribución nueva}}(k) - U_{\text{contribución vieja}}(k)
+\end{equation}
+
+donde la contribución de la partícula \(k\) es:
+
+\begin{equation}
+    U_{\text{contribución}}(k) = k_e \sum_{j \neq k} \frac{q_k q_j}{|\vec{r}_k - \vec{r}_j|}
+\end{equation}
+
+Esto reduce la complejidad por iteración de \(O(N^2)\) a \(O(N)\), acelerando la simulación significativamente.

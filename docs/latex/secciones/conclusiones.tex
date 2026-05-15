@@ -1,0 +1,48 @@
+%===============================================================================
+% conclusiones.tex
+% Capítulo 5: Conclusiones y Trabajos Futuros
+%===============================================================================
+
+\chapter{Conclusiones y Trabajos Futuros}
+\label{cap:conclusiones}
+
+\section{Conclusiones}
+En este proyecto, se desarrolló exitosamente una simulación computacional de un sistema de cargas eléctricas que utiliza un algoritmo de Monte Carlo a temperatura cero para minimizar la energía electrostática. Los principales hallazgos y logros son los siguientes:
+
+\begin{enumerate}
+    \item \textbf{Implementación exitosa del modelo físico}: Se implementaron correctamente las ecuaciones de la electrostática clásica (Ley de Coulomb, energía potencial, potencial eléctrico y campo eléctrico).
+    
+    \item \textbf{Optimización algorítmica}: Se redujo la complejidad computacional de \(O(N^2)\) a \(O(N)\) por iteración calculando solo el cambio en la energía \(\Delta U\) en lugar de recalcular toda la energía del sistema.
+    
+    \item \textbf{Estabilidad numérica}: Se implementó un parámetro de softening \(\epsilon = 0.01\) que evita las singularidades cuando dos partículas se acercan demasiado, garantizando la estabilidad de la simulación.
+    
+    \item \textbf{Validación física}: Las configuraciones de equilibrio obtenidas son consistentes con la teoría:
+    \begin{itemize}
+        \item Cargas de igual signo migran hacia la periferia del dominio para maximizar sus distancias mutuas.
+        \item La energía del sistema disminuye monótonamente y converge a un mínimo local.
+        \item Los campos eléctrico y potencial muestran el comportamiento esperado cerca de las cargas.
+    \end{itemize}
+    
+    \item \textbf{Visualización científica}: Se generaron visualizaciones de alta calidad que ilustran claramente la evolución del sistema, incluyendo scatter plots, mapas de calor del potencial, campos vectoriales y videos de la evolución temporal.
+    
+    \item \textbf{Arquitectura híbrida eficiente}: La combinación de Fortran (para el cómputo intensivo) y Python (para la visualización) demostró ser una estrategia efectiva para lograr tanto rendimiento como flexibilidad.
+\end{enumerate}
+
+\section{Limitaciones del Proyecto}
+Aunque el proyecto cumple con todos sus objetivos, presenta algunas limitaciones:
+
+\begin{itemize}
+    \item \textbf{Mínimos locales}: El algoritmo de Monte Carlo a \(T = 0\) puede quedar atrapado en mínimos locales de energía y no necesariamente encuentra el mínimo global.
+    \item \textbf{Dominio bidimensional}: La simulación está restringida a dos dimensiones; la extensión a 3D requeriría modificaciones en el código.
+    \item \textbf{Número de partículas}: Aunque se optimizó el algoritmo, el rendimiento disminuye para \(N \gg 100\) debido a la complejidad \(O(N)\) por iteración.
+\end{itemize}
+
+\section{Trabajos Futuros}
+Se proponen las siguientes líneas de trabajo para extender y mejorar el proyecto, según las posibilidades del curso:
+
+\begin{enumerate}
+    \item \textbf{Simulaciones con cargas mixtas}: Realizar más experimentos con combinaciones variables de cargas positivas y negativas para estudiar la formación de estructuras.
+    \item \textbf{Variación de parámetros}: Analizar la sensibilidad del sistema a cambios en \(\delta_{\text{max}}\), \(\epsilon\) y el número de iteraciones.
+    \item \textbf{Comparación de modos}: Estudiar las diferencias entre el comportamiento de sistemas con solo cargas positivas y sistemas con cargas mixtas.
+    \item \textbf{Análisis de convergencia}: Implementar criterios automáticos de detención basados en la tasa de aceptación y la variación de la energía.
+\end{enumerate}

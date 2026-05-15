@@ -1,0 +1,157 @@
+%===============================================================================
+% main.tex
+% Documento principal del Proyecto de Electricidad y Magnetismo
+%===============================================================================
+
+\documentclass[12pt,a4paper]{report}
+
+%-------------------------------------------------------------------------------
+% PAQUETES BÁSICOS Y DE FORMATO
+%-------------------------------------------------------------------------------
+\usepackage[utf8]{inputenc}    % Codificación UTF-8
+\usepackage[T1]{fontenc}       % Codificación de fuentes
+\usepackage[spanish]{babel}    % Idioma español
+\usepackage{geometry}          % Configuración de márgenes
+\usepackage{setspace}          % Interlineado
+\usepackage{titlesec}          % Formato de títulos
+\usepackage{tocloft}           % Índice general
+\usepackage{graphicx}          % Inclusión de figuras
+\usepackage{float}             % Posicionamiento de figuras/tablas
+\usepackage{caption}           % Captiones de figuras/tablas
+\usepackage{subcaption}        % Subfiguras
+\usepackage{amsmath,amssymb,amsthm} % Matemáticas
+\usepackage{mathtools}         % Extensiones de amsmath
+\usepackage{physics}           % Notación física
+\usepackage{hyperref}          % Enlaces y referencias
+\usepackage{xcolor}            % Colores
+\usepackage{enumitem}          % Listas
+\usepackage{array}             % Tablas
+\usepackage{booktabs}          % Tablas profesionales
+\usepackage{multirow}          % Filas combinadas en tablas
+\usepackage{multicol}          % Columnas
+\usepackage{csquotes}          % Citas
+\usepackage[backend=biber,style=ieee,sorting=nty]{biblatex} % Bibliografía IEEE
+
+%-------------------------------------------------------------------------------
+% CONFIGURACIÓN DE PÁGINA Y MÁRGENES
+%-------------------------------------------------------------------------------
+\geometry{
+    a4paper,
+    left=2.5cm,
+    right=2.5cm,
+    top=2.5cm,
+    bottom=2.5cm,
+    headheight=14.5pt,
+    headsep=10pt
+}
+
+%-------------------------------------------------------------------------------
+% INTERLINEADO Y FUENTES
+%-------------------------------------------------------------------------------
+\onehalfspacing               % Interlineado 1.5
+\usepackage{mathptmx}         % Fuente Times New Roman para texto y matemáticas
+\usepackage{microtype}        % Mejoras tipográficas
+
+%-------------------------------------------------------------------------------
+% FORMATO DE TÍTULOS
+%-------------------------------------------------------------------------------
+\titleformat{\chapter}{\LARGE\bfseries}{\thechapter.}{1em}{}
+\titleformat{\section}{\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection}{1em}{}
+
+%-------------------------------------------------------------------------------
+% CONFIGURACIÓN DE ÍNDICES
+%-------------------------------------------------------------------------------
+\renewcommand{\cftchapfont}{\bfseries}
+\renewcommand{\cftsecfont}{}
+\renewcommand{\cftsubsecfont}{\small}
+\renewcommand{\cftchappagefont}{\bfseries}
+\setlength{\cftbeforechapskip}{6pt}
+\setlength{\cftbeforesubsecskip}{3pt}
+
+%-------------------------------------------------------------------------------
+% CONFIGURACIÓN DE GRÁFICOS (OVERLEAF)
+%-------------------------------------------------------------------------------
+% Rutas de búsqueda para figuras (compatible con Overleaf)
+\graphicspath{{./figuras/}{./images/}{./}}
+% Mejorar resolución de imágenes
+\DeclareGraphicsExtensions{.png,.pdf,.jpg,.jpeg}
+% Configurar float para posicionamiento de figuras
+\floatplacement{figure}{H} % Forzar posición de figuras
+
+%-------------------------------------------------------------------------------
+% CONFIGURACIÓN DE HYPERREF
+%-------------------------------------------------------------------------------
+% Todos los enlaces en color negro (#000000) para cumplir con el requisito
+% WCAG 2.1: Contraste máximo (negro sobre blanco = 21:1, superior al requerido)
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=black,
+    urlcolor=black,
+    pdfauthor={Drako David Salazar Torres, Cristhian Santiago Parra Erazo, Jenifer Daniela Urbano Cordoba, Nicolas Alejandro Diaz Acosta, Juan Camilo Lopez Diaz},
+    pdftitle={Simulación de Cargas Eléctricas y Minimización de Energía Electrostática},
+    pdfsubject={Proyecto de Electricidad y Magnetismo - Momento III},
+    pdfkeywords={electrostática, simulación, Monte Carlo, minimización de energía}
+}
+
+%-------------------------------------------------------------------------------
+% BIBLIOGRAFÍA
+%-------------------------------------------------------------------------------
+\addbibresource{referencias.bib}
+
+%-------------------------------------------------------------------------------
+% ENCABEZADOS Y PIES DE PÁGINA
+%-------------------------------------------------------------------------------
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\leftmark}
+\rhead{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+%-------------------------------------------------------------------------------
+% NUEVOS COMANDOS Y ENTORNOS
+%-------------------------------------------------------------------------------
+\newtheorem{teorema}{Teorema}[chapter]
+\newtheorem{definicion}{Definición}[chapter]
+\newtheorem{ejemplo}{Ejemplo}[chapter]
+
+% Comandos para notación física
+\newcommand{\vect}[1]{\mathbf{#1}}
+\newcommand{\abs}[1]{\left|#1\right|}
+\newcommand{\norm}[1]{\left\|#1\right\|}
+\newcommand{\pd}[2]{\frac{\partial #1}{\partial #2}}
+\newcommand{\deriv}[2]{\frac{d#1}{d#2}}
+
+%-------------------------------------------------------------------------------
+% INICIO DEL DOCUMENTO
+%-------------------------------------------------------------------------------
+\begin{document}
+
+% Portada
+\input{secciones/portada}
+
+% Índices
+\tableofcontents
+\listoffigures
+\listoftables
+\cleardoublepage
+
+% Capítulos
+\input{secciones/introduccion}
+\input{secciones/marco_teorico}
+\input{secciones/metodologia}
+\input{secciones/resultados}
+\input{secciones/conclusiones}
+
+% Bibliografía
+\printbibliography[title=Referencias]
+
+% Apéndices (opcional)
+%\appendix
+%\input{secciones/apendice_a}
+
+\end{document}

@@ -1,0 +1,377 @@
+%===============================================================================
+% PRESENTACIÓN BEAMER — PROYECTO DE ELECTRICIDAD Y MAGNETISMO
+%===============================================================================
+% Tema: Madrid (profesional y con buen contraste)
+% Colores: Azul (corporativo, asociado a la UCC)
+% Autor: Equipo del Proyecto — Universidad Cooperativa de Colombia
+%===============================================================================
+
+\documentclass[10pt, aspectratio=169]{beamer}
+
+%-------------------------------------------------------------------------------
+% PREÁMBULO: CONFIGURACIÓN BÁSICA (SIN NINGUNA BARRA!)
+%-------------------------------------------------------------------------------
+
+% Tema SUPER MINIMALISTA sin barras ni adornos
+\usetheme{default}
+\usecolortheme{dove}  % Colores neutros, claros y SIN BARRAS
+\setbeamertemplate{navigation symbols}{}  % Ocultar símbolos de navegación
+\setbeamertemplate{caption}[numbered]     % Numerar figuras y tablas
+\setbeamertemplate{headline}{}             % SIN BARRA DE ENCABEZADO
+\setbeamertemplate{footline}{}             % SIN BARRA DE PIE DE PÁGINA
+\setbeamertemplate{blocks}[rounded][shadow=false]  % Bloques sin sombras ni bordes gruesos
+
+% Estilo de bloques sin colores fuertes que tapen contenido
+\setbeamercolor{block title}{bg=blue!10, fg=black}
+\setbeamercolor{block body}{bg=blue!5, fg=black}
+\setbeamercolor{block title alerted}{bg=red!10, fg=black}
+\setbeamercolor{block body alerted}{bg=red!5, fg=black}
+\setbeamercolor{block title example}{bg=green!10, fg=black}
+\setbeamercolor{block body example}{bg=green!5, fg=black}
+
+% Tipografías legibles
+\usepackage{amsmath, amssymb, amsthm}  % Matemáticas
+\usepackage{graphicx}                   % Figuras
+\usepackage{booktabs}                   % Tablas profesionales
+\usepackage{hyperref}                   % Enlaces
+\usepackage{xcolor}                     % Colores personalizados
+\usepackage[spanish]{babel}             % Idioma español
+\usepackage[utf8]{inputenc}             % Codificación UTF-8
+\usepackage{ragged2e}                   % Justificación mejorada
+
+% Colores personalizados (UCC)
+\definecolor{UCCAzul}{RGB}{0, 51, 102}
+\definecolor{UCCRojo}{RGB}{204, 0, 0}
+\setbeamercolor{structure}{fg=UCCAzul}
+\setbeamercolor{alerted text}{fg=UCCRojo}
+
+% Espaciado entre elementos
+\setlength{\parskip}{0.5em}
+
+%-------------------------------------------------------------------------------
+% DATOS DE LA PRESENTACIÓN (EDITAR ESTA SECCIÓN!)
+%-------------------------------------------------------------------------------
+
+\title[Simulación de Cargas Eléctricas]{
+  Simulación de Cargas Eléctricas con Método Monte Carlo a T=0
+}
+
+\subtitle{
+  Proyecto de Física II — Momento III
+}
+
+\author[Equipo]{
+  Drako David Salazar Torres \\
+  Cristhian Santiago Parra Erazo \\
+  Jenifer Daniela Urbano Cordoba \\
+  Nicolas Alejandro Diaz Acosta \\
+  Juan Camilo Lopez Diaz
+}
+
+\institute[UCC]{
+  Universidad Cooperativa de Colombia \\
+  Facultad de Ingeniería \\
+  Docente: M.Sc. Alejandro Molina
+}
+
+\date{\today}
+
+%-------------------------------------------------------------------------------
+% INICIO DEL DOCUMENTO
+%-------------------------------------------------------------------------------
+
+\begin{document}
+
+%-------------------------------------------------------------------------------
+% DIAPOSITIVA 1: TÍTULO
+%-------------------------------------------------------------------------------
+
+\begin{frame}[plain]
+  \titlepage
+\end{frame}
+
+%-------------------------------------------------------------------------------
+% DIAPOSITIVA 2: TABLA DE CONTENIDOS
+%-------------------------------------------------------------------------------
+
+\begin{frame}{Contenido}
+  \tableofcontents
+\end{frame}
+
+%-------------------------------------------------------------------------------
+% SECCIÓN 1: INTRODUCCIÓN
+%-------------------------------------------------------------------------------
+
+\section{Introducción}
+
+\begin{frame}{Contexto y Problemática}
+  \begin{block}{¿De qué se trata el proyecto?}
+    Simular el comportamiento de **cargas eléctricas electrostáticas** en un dominio 2D para encontrar la configuración de **mínima energía potencial** (estado más estable).
+  \end{block}
+
+  \pause
+
+  \begin{alertblock}{Problemática}
+    \begin{itemize}
+      \item La energía potencial es una función de alta dimensionalidad
+      \item No existe una solución analítica general para N > 2
+      \item Se necesita un método numérico eficiente para explorar el espacio de configuraciones
+    \end{itemize}
+  \end{alertblock}
+\end{frame}
+
+\begin{frame}{Objetivos del Proyecto}
+  \begin{exampleblock}{Objetivo General}
+    Desarrollar un simulador computacional de cargas eléctricas que utilice el método Monte Carlo a temperatura cero (T=0) para minimizar la energía potencial electrostática.
+  \end{exampleblock}
+
+  \pause
+
+  \begin{block}{Objetivos Específicos}
+    \begin{enumerate}
+      \item Implementar el cálculo de la energía potencial electrostática
+      \item Desarrollar el algoritmo de Monte Carlo a T=0
+      \item Crear visualizaciones científicas claras y profesionales
+      \item Analizar los resultados y la convergencia del sistema
+    \end{enumerate}
+  \end{block}
+\end{frame}
+
+%-------------------------------------------------------------------------------
+% SECCIÓN 2: MARCO TEÓRICO
+%-------------------------------------------------------------------------------
+
+\section{Marco Teórico}
+
+\begin{frame}{Ley de Coulomb y Energía Potencial}
+  \begin{block}{Ley de Coulomb \cite{carga-molina2024}}
+    La fuerza entre dos cargas puntuales es:
+    \[
+    \vec{F}_{12} = k_e \frac{q_1 q_2}{r_{12}^2} \hat{r}_{12}
+    \]
+    donde \( k_e = \frac{1}{4\pi\epsilon_0} \approx 8.988 \times 10^9 \, \text{N·m}^2/\text{C}^2 \).
+  \end{block}
+
+  \pause
+
+  \begin{block}{Energía Potencial Electrostática}
+    La energía total del sistema es la suma sobre todos los pares:
+    \[
+    U = k_e \sum_{i < j} \frac{q_i q_j}{|\vec{r}_i - \vec{r}_j|}
+    \]
+  \end{block}
+\end{frame}
+
+\begin{frame}{Método Monte Carlo a T=0 \cite{proyecto-molina2024}}
+  \begin{alertblock}{¿Cómo funciona?}
+    Es un algoritmo de **descenso de gradiente estocástico**:
+    \begin{enumerate}
+      \item Seleccionar una partícula al azar
+      \item Moverla una pequeña distancia aleatoria
+      \item Calcular el cambio de energía \( \Delta U \)
+      \item \textbf{Aceptar} si \( \Delta U < 0 \) (energía disminuye)
+      \item \textbf{Rechazar} si \( \Delta U \geq 0 \) (energía aumenta)
+    \end{enumerate}
+  \end{alertblock}
+
+  \pause
+
+  \begin{block}{Ventaja}
+    No requiere calcular gradientes — solo compara energías!
+  \end{block}
+\end{frame}
+
+%-------------------------------------------------------------------------------
+% SECCIÓN 3: METODOLOGÍA
+%-------------------------------------------------------------------------------
+
+\section{Metodología y Arquitectura}
+
+\begin{frame}{Arquitectura del Sistema}
+  \begin{block}{Arquitectura Híbrida: Fortran + Python}
+    \begin{itemize}
+      \item \textbf{Fortran}: Núcleo numérico (cálculos de energía, algoritmo Monte Carlo)
+      \item \textbf{Python}: Visualización y análisis de datos
+    \end{itemize}
+  \end{block}
+
+  \pause
+
+  \begin{table}
+    \centering
+    \caption{Comparación de rendimiento (Fortran vs Python)}
+    \begin{tabular}{lcc}
+      \toprule
+      Característica & Fortran & Python \\
+      \midrule
+      Velocidad & Muy alta & Moderada \\
+      Complejidad de escritura & Alta & Baja \\
+      Visualización & Limitada & Excelente \\
+      \bottomrule
+    \end{tabular}
+  \end{table}
+\end{frame}
+
+\begin{frame}{Parámetros de Simulación}
+  \begin{table}
+    \centering
+    \caption{Parámetros configurables}
+    \begin{tabular}{llc}
+      \toprule
+      Parámetro & Descripción & Valor por defecto \\
+      \midrule
+      \( N \) & Número de partículas & 50 \\
+      \( L \) & Tamaño del dominio & 10.0 \\
+      \( \delta \) & Tamaño de movimiento & 0.25 \\
+      \( \text{Iteraciones} \) & Pasos totales & 500,000 \\
+      \( \text{Modo de cargas} \) & Solo (+1) o mezcla (+1/-1) & 1 \\
+      \bottomrule
+    \end{tabular}
+  \end{table}
+\end{frame}
+
+%-------------------------------------------------------------------------------
+% SECCIÓN 4: RESULTADOS
+%-------------------------------------------------------------------------------
+
+\section{Resultados}
+
+\begin{frame}{Evolución del Sistema: Inicial vs Final}
+  \begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{figuras/comparison_initial_vs_final.png}
+    \caption{Comparación de la configuración inicial (izquierda) y final (derecha)}
+    \label{fig:comparison}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Convergencia de la Energía}
+  \begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{figuras/energy_vs_iteration.png}
+    \caption{Energía potencial vs número de iteraciones (la curva converge a un mínimo)}
+    \label{fig:energia}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Potencial y Campo Eléctrico}
+  \begin{columns}
+    \column{0.5\textwidth}
+      \begin{figure}
+        \centering
+        \includegraphics[width=\linewidth]{figuras/potential_heatmap.png}
+        \caption{Mapa de calor del potencial eléctrico}
+        \label{fig:potencial}
+      \end{figure}
+    \column{0.5\textwidth}
+      \begin{figure}
+        \centering
+        \includegraphics[width=\linewidth]{figuras/electric_field_quiver.png}
+        \caption{Campo eléctrico (dirección y magnitud)}
+        \label{fig:campo}
+      \end{figure}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Análisis Estadístico}
+  \begin{exampleblock}{Resumen de resultados}
+    \begin{itemize}
+      \item \textbf{Reducción de energía}: >70% en configuraciones típicas
+      \item \textbf{Convergencia}: El sistema alcanza estabilidad después de ~200k iteraciones
+      \item \textbf{Distribución final}: Las cargas se organizan en configuraciones simétricas
+    \end{itemize}
+  \end{exampleblock}
+
+  \pause
+
+  \begin{alertblock}{Observación clave}
+    ¡La simulación funciona como esperábamos! El sistema siempre busca el estado de mínima energía.
+  \end{alertblock}
+\end{frame}
+
+%-------------------------------------------------------------------------------
+% SECCIÓN 5: CONCLUSIONES
+%-------------------------------------------------------------------------------
+
+\section{Conclusiones y Trabajo Futuro}
+
+\begin{frame}{Conclusiones}
+  \begin{block}{Logros alcanzados}
+    \begin{enumerate}
+      \item Se desarrolló un simulador de cargas eléctricas completamente funcional
+      \item Se implementó el algoritmo Monte Carlo a T=0 con éxito
+      \item Se generaron visualizaciones claras y profesionales
+      \item Se verificó la convergencia del sistema a estados de mínima energía
+    \end{enumerate}
+  \end{block}
+
+  \pause
+
+  \begin{exampleblock}{Aprendizajes}
+    \begin{itemize}
+      \item Fortran es ideal para cálculos numéricos intensivos
+      \item El método Monte Carlo es muy robusto para problemas de optimización
+      \item La visualización es crucial para interpretar resultados físicos
+    \end{itemize}
+  \end{exampleblock}
+\end{frame}
+
+\begin{frame}{Trabajo Futuro}
+  \begin{alertblock}{Posibles mejoras}
+    \begin{itemize}
+      \item Implementar el algoritmo Barnes-Hut para N muy grandes (>200)
+      \item Agregar temperatura finita (Monte Carlo Metropolis)
+      \item Extender a 3 dimensiones
+      \item Agregar interacción con campos externos
+    \end{itemize}
+  \end{alertblock}
+\end{frame}
+
+%-------------------------------------------------------------------------------
+% SECCIÓN 6: REFERENCIAS
+%-------------------------------------------------------------------------------
+
+\section{Referencias}
+
+\begin{frame}{Referencias}
+  \begin{thebibliography}{9}
+    \bibitem{carga-molina2024}
+      Molina, A. (2024).
+      \emph{Carga eléctrica y Ley de Coulomb}.
+      Notas de clase, Universidad Cooperativa de Colombia.
+
+    \bibitem{potencial-molina2024}
+      Molina, A. (2024).
+      \emph{Potencial Eléctrico}.
+      Notas de clase, Universidad Cooperativa de Colombia.
+
+    \bibitem{campo-molina2024}
+      Molina, A. (2024).
+      \emph{Campo Eléctrico}.
+      Notas de clase, Universidad Cooperativa de Colombia.
+
+    \bibitem{proyecto-molina2024}
+      Molina, A. (2024).
+      \emph{Enunciado del Proyecto de Electricidad y Magnetismo}.
+      Universidad Cooperativa de Colombia.
+  \end{thebibliography}
+\end{frame}
+
+%-------------------------------------------------------------------------------
+% DIAPOSITIVA FINAL: AGRADECIMIENTOS
+%-------------------------------------------------------------------------------
+
+\begin{frame}[plain]
+  \centering
+  \Huge \textcolor{UCCAzul}{¡Gracias por su atención!}
+
+  \vspace{2em}
+
+  \Large ¿Preguntas?
+\end{frame}
+
+%-------------------------------------------------------------------------------
+% FIN DEL DOCUMENTO
+%-------------------------------------------------------------------------------
+
+\end{document}
