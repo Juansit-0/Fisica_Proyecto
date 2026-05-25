@@ -1,0 +1,12 @@
+=== INFORMACIÓN DE SIMULACIÓN ===
+Fecha y hora: 2026-05-22T07:09:12.539828
+Semilla: 4
+
+PARÁMETROS:
+Número de partículas: 50
+Tamaño del dominio: 10.0
+Delta movimiento: 0.25
+Iteraciones máximas: 500000
+Modo de carga: 1
+Save every: 100
+Print every: 10000

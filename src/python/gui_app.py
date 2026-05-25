@@ -242,8 +242,6 @@ ensure_dirs()
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_INPUT = PROJECT_ROOT / "data" / "input"
 DATA_OUTPUT = PROJECT_ROOT / "data" / "output"
-CONFIGS_DIR = PROJECT_ROOT / "configs"
-CONFIGS_DIR.mkdir(exist_ok=True)
 
 # Directorio de videos
 VIDEOS_DIR = PROJECT_ROOT / "results" / "videos"
@@ -282,39 +280,8 @@ if 'SEMILLA' not in st.session_state:
 
 
 #===============================================================================
-# FUNCIONES AUXILIARES (ACTUALIZADAS)
+# FUNCIONES AUXILIARES
 #===============================================================================
-
-def guardar_configuracion(nombre: str, params: Dict[str, Any]) -> Path:
-    """Guarda una configuración con metadatos descriptivos."""
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    
-    # Agregar metadatos legibles
-    params_legibles = {
-        "metadatos": {
-            "nombre_experimento": nombre,
-            "fecha": datetime.now().isoformat(),
-            "descripcion": AbstraccionDatos.obtener_nivel_complejidad(params.get("N_PARTICULAS", 50)),
-        },
-        "parametros_tecnicos": params
-    }
-    
-    filename = CONFIGS_DIR / f"config_{nombre}_{timestamp}.json"
-    with open(filename, "w", encoding="utf-8") as f:
-        json.dump(params_legibles, f, indent=2, ensure_ascii=False)
-    return filename
-
-
-def cargar_configuracion(filepath: Path) -> Dict[str, Any]:
-    """Carga una configuración y extrae los parámetros técnicos."""
-    with open(filepath, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    return data.get("parametros_tecnicos", data)
-
-
-def listar_configuraciones():
-    """Lista configuraciones con información legible."""
-    return sorted(CONFIGS_DIR.glob("config_*.json"), reverse=True)
 
 
 #===============================================================================
@@ -451,71 +418,6 @@ with st.sidebar:
     st.markdown("---")
     
     #---------------------------------------------------------------------------
-    # SECCIÓN 5: GUARDAR/CARGAR CONFIGURACIONES
-    #---------------------------------------------------------------------------
-    st.header("Gestionar Configuraciones")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        nombre_exp = st.text_input(
-            label="Nombre del experimento",
-            value="experimento",
-            label_visibility="collapsed",
-            placeholder="Nombre del experimento..."
-        )
-        
-        if st.button("Guardar", use_container_width=True):
-            params = {
-                "N_PARTICULAS": N_PARTICULAS,
-                "L_DOMINIO": L_DOMINIO,
-                "DELTA_MOV": DELTA_MOV,
-                "MAX_ITER": MAX_ITER,
-                "SAVE_EVERY": SAVE_EVERY,
-                "CHARGE_MODE": CHARGE_MODE,
-                "EPSILON_SOFT": EPSILON_SOFT,
-                "SEMILLA": SEMILLA
-            }
-            filepath = guardar_configuracion(nombre_exp, params)
-            st.success(f"Guardado: {filepath.name}")
-    
-    with col2:
-        config_files = listar_configuraciones()
-        if config_files:
-            selected_config = st.selectbox(
-                label="Cargar",
-                options=["-- Seleccionar --"] + [f.name for f in config_files],
-                label_visibility="collapsed",
-                key="select_config"
-            )
-            if selected_config != "-- Seleccionar --":
-                # Cargar la configuración seleccionada
-                config_path = CONFIGS_DIR / selected_config
-                params = cargar_configuracion(config_path)
-                
-                # Actualizar session_state con los valores cargados
-                st.session_state.N_PARTICULAS = params.get("N_PARTICULAS", 50)
-                st.session_state.L_DOMINIO = params.get("L_DOMINIO", 10.0)
-                st.session_state.DELTA_MOV = params.get("DELTA_MOV", 0.25)
-                st.session_state.MAX_ITER = params.get("MAX_ITER", 500000)
-                st.session_state.SAVE_EVERY = params.get("SAVE_EVERY", 100)
-                
-                # Convertir CHARGE_MODE numérico a texto
-                charge_mode_num = params.get("CHARGE_MODE", 1)
-                for texto, num in OPCIONES_MODOS.items():
-                    if num == charge_mode_num:
-                        st.session_state.MODO_CARGA_TEXTO = texto
-                        break
-                
-                st.session_state.EPSILON_SOFT = params.get("EPSILON_SOFT", 0.01)
-                st.session_state.SEMILLA = params.get("SEMILLA", 0)
-                
-                st.success(f"Configuración {selected_config} cargada!")
-                st.rerun()
-    
-    st.markdown("---")
-    
-    #---------------------------------------------------------------------------
     # SECCIÓN 6: EJECUCIÓN DIRECTA
     #---------------------------------------------------------------------------
     st.header("Ejecutar Simulación")
@@ -556,10 +458,19 @@ st.markdown("---")
 # PESTAÑAS PRINCIPALES (MEJORADAS)
 #-------------------------------------------------------------------------------
 
+# Establecer directorios de figuras y videos
+CURRENT_FIGURES_DIR = FIGURES_DIR
+CURRENT_VIDEOS_DIR = VIDEOS_DIR
+CURRENT_DATA_OUTPUT = DATA_OUTPUT
+
+#-------------------------------------------------------------------------------
+# PESTAÑAS PRINCIPALES (MEJORADAS)
+#-------------------------------------------------------------------------------
+
 tab1, tab2, tab3, tab4 = st.tabs([
     "Resultados Visuales", 
     "Análisis del Experimento", 
-    "Resumen de Parámetros", 
+    "Comparación de Simulaciones",
     "Ayuda y Conceptos"
 ])
 
@@ -575,7 +486,7 @@ with tab1:
     
     with col1:
         st.subheader("Evolución del Sistema")
-        comparison_img = FIGURES_DIR / "comparison_initial_vs_final.png"
+        comparison_img = CURRENT_FIGURES_DIR / "comparison_initial_vs_final.png"
         if comparison_img.exists():
             st.image(str(comparison_img), use_container_width=True, caption="Comparación: Estado inicial vs Estado final")
         else:
@@ -583,7 +494,7 @@ with tab1:
     
     with col2:
         st.subheader("Comportamiento de la Energía")
-        energy_img = FIGURES_DIR / "energy_vs_iteration.png"
+        energy_img = CURRENT_FIGURES_DIR / "energy_vs_iteration.png"
         if energy_img.exists():
             st.image(str(energy_img), use_container_width=True, caption="Cómo disminuyó la energía a lo largo del tiempo")
         else:
@@ -595,13 +506,13 @@ with tab1:
     
     with col3:
         st.subheader("Potencial Eléctrico")
-        potential_img = FIGURES_DIR / "potential_heatmap.png"
+        potential_img = CURRENT_FIGURES_DIR / "potential_heatmap.png"
         if potential_img.exists():
             st.image(str(potential_img), use_container_width=True, caption="Mapa de 'tensión' en el espacio")
     
     with col4:
         st.subheader("Campo Eléctrico")
-        field_img = FIGURES_DIR / "electric_field_quiver.png"
+        field_img = CURRENT_FIGURES_DIR / "electric_field_quiver.png"
         if field_img.exists():
             st.image(str(field_img), use_container_width=True, caption="Dirección y fuerza del campo eléctrico")
     
@@ -611,7 +522,7 @@ with tab1:
     # VIDEO DE EVOLUCIÓN
     #---------------------------------------------------------------------------
     st.subheader("Video de la Evolución del Sistema")
-    video_path = VIDEOS_DIR / "evolucion_cargas.mp4"
+    video_path = CURRENT_VIDEOS_DIR / "evolucion_cargas.mp4"
     if video_path.exists():
         # Copiar el video al directorio static para servirlo correctamente
         import shutil
@@ -653,16 +564,16 @@ with tab2:
     col1, col2 = st.columns(2)
     
     with col1:
-        st.subheader("Distancias entre Partículas")
-        dist_img = FIGURES_DIR / "distance_histogram.png"
-        if dist_img.exists():
-            st.image(str(dist_img), use_container_width=True, caption="Cómo se distribuyeron las distancias entre las cargas")
+        st.subheader("Comparación de Energías entre Configuraciones")
+        comp_img = FIGURES_DIR / "energy_comparison_histogram.png"
+        if comp_img.exists():
+            st.image(str(comp_img), use_container_width=True, caption="Energías de 10 configuraciones + la final")
     
     with col2:
-        st.subheader("Posición Respecto al Centro")
-        radial_img = FIGURES_DIR / "radial_distribution.png"
-        if radial_img.exists():
-            st.image(str(radial_img), use_container_width=True, caption="Dónde se ubicaron las cargas dentro del espacio")
+        st.subheader("Distribución de Energías Durante la Simulación")
+        dist_img = FIGURES_DIR / "energy_distribution.png"
+        if dist_img.exists():
+            st.image(str(dist_img), use_container_width=True, caption="Cómo se distribuyeron las energías durante la ejecución")
     
     st.markdown("---")
     
@@ -692,37 +603,292 @@ with tab2:
         st.info("No hay datos numéricos disponibles aún.")
 
 #-------------------------------------------------------------------------------
-# PESTAÑA 3: RESUMEN DE PARÁMETROS (CON ABSTRACCIÓN)
+# PESTAÑA 3: COMPARACIÓN DE SIMULACIONES
 #-------------------------------------------------------------------------------
 with tab3:
-    st.header("Resumen de la Configuración Utilizada")
+    st.header("Comparación de Simulaciones")
+    st.markdown("---")
     
-    params_file = DATA_INPUT / "simulation_params.txt"
-    if params_file.exists():
-        with open(params_file, "r") as f:
-            lines = [line.strip() for line in f.readlines() if line.strip()]
+    st.markdown("### Resumen del Proceso:")
+    st.info("""
+    1. **Configura tus parámetros** en el panel izquierdo
+    2. **Ejecuta el batch de 15 simulaciones** con semillas diferentes (1-15)
+    3. **Visualiza resultados individuales** de cada simulación
+    4. **Ver la comparación integral** de todas las ejecuciones
+    """)
+    
+    st.markdown("---")
+    
+    # Directorio de resultados de comparación
+    COMPARISON_RESULTS_DIR = PROJECT_ROOT / "comparison_results"
+    COMPARISON_RESULTS_DIR.mkdir(exist_ok=True)
+    
+    #---------------------------------------------------------------------------
+    # SECCIÓN 1: EJECUTAR BATCH DE SIMULACIONES
+    #---------------------------------------------------------------------------
+    st.subheader("1. Ejecutar Batch de 15 Simulaciones")
+    
+    if st.button("Iniciar Batch de Comparación", type="primary", use_container_width=True):
+        # Primero guardar los parámetros actuales
+        with st.spinner("Guardando parámetros base..."):
+            escribir_parametros(
+                n_particulas=N_PARTICULAS,
+                l_dominio=L_DOMINIO,
+                delta_mov=DELTA_MOV,
+                max_iter=MAX_ITER,
+                charge_mode=CHARGE_MODE,
+                save_every=SAVE_EVERY,
+                semilla=SEMILLA
+            )
+            st.success("Parámetros base guardados!")
         
-        # Presentar parámetros con abstracción y etiquetas legibles
-        param_info = [
-            ("Tamaño del sistema", "Número de partículas", lines[0]),
-            ("Espacio de trabajo", "Tamaño del dominio (L)", lines[1]),
-            ("Velocidad de ajuste", "Tamaño de movimiento (δ)", lines[2]),
-            ("Duración", "Iteraciones máximas", lines[3]),
-            ("Tipo de interacción", "Modo de cargas (1=+, 2=±)", 
-             AbstraccionDatos.TRADUCCION_CARGA.get(int(lines[4]), lines[4])),
-            ("Frecuencia de registro", "Guardar cada N aceptaciones", lines[5]),
-        ]
+        st.warning("""
+        Este proceso ejecutará 15 simulaciones consecutivas, cada una con una semilla diferente (1-15).
+        Esto puede tardar MUCHOS minutos (dependiendo de tus parámetros).
         
-        # Tarjetas visuales para cada parámetro
-        for categoria, etiqueta, valor in param_info:
-            with st.container():
-                st.markdown(f"#### {categoria}")
-                col_a, col_b = st.columns([1, 2])
-                col_a.markdown(f"**{etiqueta}:**")
-                col_b.markdown(f"`{valor}`")
+        ¿Estás seguro de continuar?
+        """)
+        
+        # Usamos un placeholder para mostrar el progreso
+        progress_placeholder = st.empty()
+        
+        # Ejecutar el script de comparación
+        try:
+            with st.spinner("Ejecutando 15 simulaciones... (esto puede tardar mucho)"):
+                resultado = subprocess.run(
+                    ["python3", "src/python/run_comparison_batch.py"],
+                    cwd=str(PROJECT_ROOT),
+                    capture_output=True,
+                    text=True
+                )
+                
+                if resultado.returncode == 0:
+                    st.success("Batch completado exitosamente!")
+                    st.balloons()
+                    st.text(resultado.stdout)
+                else:
+                    st.error("Error al ejecutar el batch!")
+                    st.text(resultado.stderr)
+                    
+        except Exception as e:
+            st.error(f"Error: {str(e)}")
+    
+    st.markdown("---")
+    
+    #---------------------------------------------------------------------------
+    # SECCIÓN 2: SELECCIONAR BATCH EXISTENTE
+    #---------------------------------------------------------------------------
+    st.subheader("2. Ver Resultados de un Batch")
+    
+    batches = sorted(COMPARISON_RESULTS_DIR.glob("batch_*"), reverse=True)
+    
+    if batches:
+        batch_seleccionado = st.selectbox(
+            "Seleccionar batch de resultados",
+            ["-- Seleccionar --"] + [b.name for b in batches],
+            index=0
+        )
+        
+        if batch_seleccionado != "-- Seleccionar --":
+            batch_dir = COMPARISON_RESULTS_DIR / batch_seleccionado
+            
+            # Leer resumen del batch
+            resumen_file = batch_dir / "batch_summary.txt"
+            if resumen_file.exists():
+                with open(resumen_file, "r", encoding="utf-8") as f:
+                    st.text_area("Resumen del Batch", f.read(), height=200)
+            
+            # Obtener todas las simulaciones del batch
+            simulaciones = sorted([d for d in batch_dir.iterdir() if d.is_dir() and d.name.startswith("simulacion_seed_")])
+            
+            if simulaciones:
                 st.markdown("---")
+                
+                # Pestañas para ver resultados individuales y comparación
+                tab_individual, tab_comparacion = st.tabs([
+                    "Resultados Individuales", 
+                    "Comparación Integral"
+                ])
+                
+                #-------------------------------------------------------------------
+                # PESTAÑA: RESULTADOS INDIVIDUALES
+                #-------------------------------------------------------------------
+                with tab_individual:
+                    st.subheader("Resultados de Cada Simulación")
+                    
+                    # Selector de simulación
+                    sim_seleccionada = st.selectbox(
+                        "Seleccionar simulación",
+                        [s.name for s in simulaciones],
+                        index=0
+                    )
+                    
+                    sim_dir = batch_dir / sim_seleccionada
+                    
+                    # Leer info de la simulación
+                    info_file = sim_dir / "simulation_info.txt"
+                    if info_file.exists():
+                        with open(info_file, "r", encoding="utf-8") as f:
+                            st.text_area("Información de la Simulación", f.read(), height=150)
+                    
+                    # Mostrar figuras
+                    figuras_dir = sim_dir / "figures"
+                    if figuras_dir.exists():
+                        st.markdown("### Visualizaciones")
+                        
+                        col1, col2 = st.columns(2)
+                        
+                        with col1:
+                            comp_img = figuras_dir / "comparison_initial_vs_final.png"
+                            if comp_img.exists():
+                                st.image(str(comp_img), use_container_width=True, caption="Comparación Inicial vs Final")
+                        
+                        with col2:
+                            energy_img = figuras_dir / "energy_vs_iteration.png"
+                            if energy_img.exists():
+                                st.image(str(energy_img), use_container_width=True, caption="Energía vs Iteración")
+                        
+                        col3, col4 = st.columns(2)
+                        
+                        with col3:
+                            potential_img = figuras_dir / "potential_heatmap.png"
+                            if potential_img.exists():
+                                st.image(str(potential_img), use_container_width=True, caption="Potencial Eléctrico")
+                        
+                        with col4:
+                            field_img = figuras_dir / "electric_field_quiver.png"
+                            if field_img.exists():
+                                st.image(str(field_img), use_container_width=True, caption="Campo Eléctrico")
+                    
+                    # Análisis detallado
+                    data_dir = sim_dir / "data"
+                    energy_log = data_dir / "energy_log.csv"
+                    if energy_log.exists():
+                        st.markdown("---")
+                        st.subheader("Análisis Detallado")
+                        
+                        df_energy = pd.read_csv(energy_log)
+                        e_init = df_energy['energy'].iloc[0]
+                        e_final = df_energy['energy'].iloc[-1]
+                        
+                        analisis = AbstraccionDatos.obtener_estado_convergencia(e_init, e_final, len(df_energy))
+                        
+                        metric1, metric2, metric3, metric4 = st.columns(4)
+                        metric1.metric("Energía inicial", AbstraccionDatos.formatear_energia(e_init))
+                        metric2.metric("Energía final", AbstraccionDatos.formatear_energia(e_final))
+                        metric3.metric("Reducción", f"{analisis['reduccion']:.1f}%")
+                        metric4.metric("Iteraciones", f"{len(df_energy):,}")
+                        
+                        st.markdown(f"### Estado: {analisis['estado']}")
+                        st.success(analisis['interpretacion'])
+                
+                #-------------------------------------------------------------------
+                # PESTAÑA: COMPARACIÓN INTEGRAL
+                #-------------------------------------------------------------------
+                with tab_comparacion:
+                    st.subheader("Comparación de Todas las Simulaciones")
+                    
+                    # Recolectar datos de todas las simulaciones
+                    datos_simulaciones = []
+                    for sim_dir in simulaciones:
+                        data_dir = sim_dir / "data"
+                        energy_log = data_dir / "energy_log.csv"
+                        if energy_log.exists():
+                            df = pd.read_csv(energy_log)
+                            seed = int(sim_dir.name.replace("simulacion_seed_", ""))
+                            datos_simulaciones.append({
+                                "seed": seed,
+                                "e_inicial": df['energy'].iloc[0],
+                                "e_final": df['energy'].iloc[-1],
+                                "iteraciones": len(df)
+                            })
+                    
+                    if datos_simulaciones:
+                        # Crear DataFrame para la comparación
+                        df_comparacion = pd.DataFrame(datos_simulaciones)
+                        df_comparacion = df_comparacion.sort_values("seed")
+                        
+                        # Mostrar tabla de resultados
+                        st.markdown("### Tabla de Resultados")
+                        st.dataframe(df_comparacion, use_container_width=True)
+                        
+                        st.markdown("---")
+                        
+                        # Gráfico de comparación de energías finales
+                        st.markdown("### Gráfico: Energías Finales por Semilla")
+                        import matplotlib.pyplot as plt
+                        
+                        fig, ax = plt.subplots(figsize=(14, 8))
+                        
+                        # Crear gráfico de barras con valores exactos
+                        barras = ax.bar(
+                            [str(s) for s in df_comparacion["seed"]], 
+                            df_comparacion["e_final"], 
+                            color='#1f77b4',
+                            edgecolor='#0a3d62',
+                            linewidth=1.2
+                        )
+                        
+                        # Ajustar ejes a los rangos de los datos
+                        min_energia = df_comparacion["e_final"].min()
+                        max_energia = df_comparacion["e_final"].max()
+                        rango = max_energia - min_energia
+                        ax.set_ylim(bottom=min_energia - rango * 0.1, top=max_energia + rango * 0.1)
+                        
+                        # Configurar malla con subdivisiones pequeñas y precisas
+                        ax.grid(True, which='both', linestyle='--', linewidth=0.8, alpha=0.7, color='gray')
+                        ax.minorticks_on()
+                        ax.grid(True, which='minor', linestyle=':', linewidth=0.5, alpha=0.4, color='lightgray')
+                        
+                        # Etiquetas detalladas en cada punto de datos
+                        for barra, energia in zip(barras, df_comparacion["e_final"]):
+                            altura = barra.get_height()
+                            ax.text(
+                                barra.get_x() + barra.get_width()/2,
+                                altura + rango * 0.02,
+                                f"{energia:.6f}",
+                                ha='center',
+                                va='bottom',
+                                fontsize=7,
+                                fontweight='bold',
+                                bbox=dict(boxstyle='round,pad=0.2', facecolor='white', alpha=0.9, edgecolor='#1f77b4')
+                            )
+                        
+                        # Etiquetas y título
+                        ax.set_xlabel('Semilla', fontsize=12, fontweight='bold')
+                        ax.set_ylabel('Energía Final (valor exacto)', fontsize=12, fontweight='bold')
+                        ax.set_title('Comparación de Energías Finales por Semilla (Valores Brutos y Exactos)', fontsize=14, fontweight='bold', pad=20)
+                        ax.tick_params(axis='both', which='major', labelsize=10)
+                        plt.setp(ax.get_xticklabels(), rotation=45, ha='right', fontsize=7)
+                        plt.tight_layout()
+                        
+                        st.pyplot(fig)
+                        
+                        st.markdown("---")
+                        
+                        # Estadísticas resumidas (valores brutos)
+                        st.markdown("### Estadísticas de los Valores Brutos")
+                        col1, col2, col3 = st.columns(3)
+                        col1.metric("Energía Mínima", f"{df_comparacion['e_final'].min():.6f}")
+                        col2.metric("Energía Máxima", f"{df_comparacion['e_final'].max():.6f}")
+                        col3.metric("Rango Total", f"{(df_comparacion['e_final'].max() - df_comparacion['e_final'].min()):.6f}")
+                        
+                        st.markdown("---")
+                        
+                        # Conclusiones generales (solo valores brutos)
+                        st.markdown("### Conclusiones de las Mediciones Brutas")
+                        st.info(f"""
+                        **Resumen de {len(simulaciones)} mediciones independientes:**
+                        
+                        1. **Valores Registrados**: Se muestran todos los valores exactos de energía final (6 decimales)
+                        2. **Mínima Energía**: La simulación con semilla {df_comparacion.loc[df_comparacion['e_final'].idxmin(), 'seed']} registró {df_comparacion['e_final'].min():.6f}
+                        3. **Máxima Energía**: La simulación con semilla {df_comparacion.loc[df_comparacion['e_final'].idxmax(), 'seed']} registró {df_comparacion['e_final'].max():.6f}
+                        4. **Variabilidad**: La diferencia entre el valor máximo y mínimo es {(df_comparacion['e_final'].max() - df_comparacion['e_final'].min()):.6f}
+                        """)
+                    else:
+                        st.warning("No hay datos suficientes para generar la comparación.")
     else:
-        st.info("No hay información de parámetros disponible.")
+        st.info("Aún no hay batches de comparación ejecutados. Usa el botón de arriba para iniciar uno!")
 
 #-------------------------------------------------------------------------------
 # PESTAÑA 4: AYUDA Y CONCEPTOS (DOCUMENTACIÓN INLINE)

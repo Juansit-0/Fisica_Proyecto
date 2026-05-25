@@ -2,8 +2,8 @@
 analysis.py — Análisis estadístico y físico de la simulación
 
 Análisis de:
-- Distribución radial de cargas
-- Distancias mínimas entre partículas
+- Histogramas de energía comparando múltiples configuraciones
+- Distribución de energías durante la simulación
 - Estadísticas de convergencia
 - Resumen del sistema
 
@@ -17,82 +17,98 @@ import matplotlib.pyplot as plt
 from config import (setup_matplotlib, ensure_dirs, FIGURES_DIR,
                     L_DOMAIN, DPI, FIGURE_SIZE, MATPLOTLIB_STYLE)
 from data_loader import (load_energy_log, load_initial_configuration,
-                          load_final_configuration, get_positions_and_charges)
+                          load_final_configuration, load_all_configurations, get_positions_and_charges)
 
 
-def compute_pairwise_distances(x, y):
-    """Calcula todas las distancias entre pares de partículas."""
+def compute_total_energy(x, y, q, epsilon=1e-2):
+    """Calcula la energía total del sistema para una configuración."""
     n = len(x)
-    distances = []
+    U = 0.0
     for i in range(n - 1):
         for j in range(i + 1, n):
-            d = np.sqrt((x[i]-x[j])**2 + (y[i]-y[j])**2)
-            distances.append(d)
-    return np.array(distances)
+            dx = x[i] - x[j]
+            dy = y[i] - y[j]
+            r = np.sqrt(dx*dx + dy*dy + epsilon*epsilon)
+            U += q[i] * q[j] / r
+    return U
 
 
-def plot_distance_histogram():
-    """Histograma de distancias entre pares: inicial vs final."""
+def plot_energy_comparison_histogram():
+    """Histograma de energías comparando múltiples configuraciones (10 + final)."""
     plt.rcParams.update(MATPLOTLIB_STYLE)
     
-    df_i = load_initial_configuration()
-    df_f = load_final_configuration()
-    xi, yi, _ = get_positions_and_charges(df_i)
-    xf, yf, _ = get_positions_and_charges(df_f)
-
-    d_initial = compute_pairwise_distances(xi, yi)
-    d_final = compute_pairwise_distances(xf, yf)
-
+    configs = load_all_configurations()
+    
+    num_configs = len(configs)
+    step = max(1, num_configs // 10)  # Tomar 10 configuraciones + final
+    selected_configs = configs[::step]
+    if len(selected_configs) > 10:
+        selected_configs = selected_configs[:10]
+    # Asegurar que la configuración final está incluida
+    if configs[-1] not in selected_configs:
+        selected_configs.append(configs[-1])
+    
+    energies = []
+    labels = []
+    
+    for (num, df) in selected_configs:
+        x, y, q = get_positions_and_charges(df)
+        U = compute_total_energy(x, y, q)
+        energies.append(U)
+        labels.append(f'Config {num}')
+    
     fig, ax = plt.subplots(figsize=FIGURE_SIZE)
-    ax.hist(d_initial, bins=30, alpha=0.5, color='#FF6B6B', label='Inicial',
-            density=True, edgecolor='white', linewidth=0.5)
-    ax.hist(d_final, bins=30, alpha=0.5, color='#51CF66', label='Final',
-            density=True, edgecolor='white', linewidth=0.5)
-
-    ax.set_xlabel('Distancia entre pares', fontsize=13)
-    ax.set_ylabel('Densidad', fontsize=13)
-    ax.set_title('Distribución de Distancias — Inicial vs Final',
+    colors = plt.cm.viridis(np.linspace(0, 1, len(energies)))
+    
+    bars = ax.bar(labels, energies, color=colors, edgecolor='white', linewidth=1)
+    
+    ax.set_xlabel('Configuración', fontsize=13)
+    ax.set_ylabel('Energía total U', fontsize=13)
+    ax.set_title('Comparación de Energías — Múltiples Configuraciones',
                  fontsize=15, fontweight='bold', pad=12)
-    ax.legend(fontsize=11, framealpha=0.8, facecolor='#161B22', edgecolor='#30363D')
-    ax.grid(True, alpha=0.2)
-
+    ax.grid(True, alpha=0.6, color='#888888', linewidth=0.8, linestyle='-')
+    
+    plt.xticks(rotation=45, ha='right')
+    
     plt.tight_layout()
-    filepath = FIGURES_DIR / 'distance_histogram.png'
+    filepath = FIGURES_DIR / 'energy_comparison_histogram.png'
     fig.savefig(filepath, dpi=DPI, bbox_inches='tight', facecolor=fig.get_facecolor())
     plt.close(fig)
-    print(f"   Histograma de distancias: {filepath}")
+    print(f"   Histograma de comparación de energías: {filepath}")
 
 
-def plot_radial_distribution():
-    """Distribución de distancias al centro del dominio."""
+def plot_energy_distribution():
+    """Distribución de energías durante la simulación."""
     plt.rcParams.update(MATPLOTLIB_STYLE)
     
-    df_i = load_initial_configuration()
-    df_f = load_final_configuration()
-    xi, yi, _ = get_positions_and_charges(df_i)
-    xf, yf, _ = get_positions_and_charges(df_f)
-
-    r_initial = np.sqrt(xi**2 + yi**2)
-    r_final = np.sqrt(xf**2 + yf**2)
-
+    df_energy = load_energy_log()
+    energies = df_energy['energy'].values
+    n_total = len(energies)
+    
     fig, ax = plt.subplots(figsize=FIGURE_SIZE)
-    ax.hist(r_initial, bins=20, alpha=0.5, color='#FF6B6B', label='Inicial',
-            density=True, edgecolor='white', linewidth=0.5)
-    ax.hist(r_final, bins=20, alpha=0.5, color='#51CF66', label='Final',
-            density=True, edgecolor='white', linewidth=0.5)
-
-    ax.set_xlabel('Distancia al centro', fontsize=13)
-    ax.set_ylabel('Densidad', fontsize=13)
-    ax.set_title('Distribución Radial — Distancia al Centro',
+    n, bins, patches = ax.hist(energies, bins=30, alpha=0.7, color='#51CF66',
+                                edgecolor='white', linewidth=0.5)
+    
+    # Convertir a porcentaje
+    n_percent = (n / n_total) * 100
+    ax.clear()
+    ax.bar(bins[:-1], n_percent, width=np.diff(bins), alpha=0.7, color='#51CF66',
+           edgecolor='white', linewidth=0.5)
+    
+    ax.set_xlabel('Energía total U', fontsize=13)
+    ax.set_ylabel('Frecuencia (%)', fontsize=13)
+    ax.set_title('Distribución de Energías Durante la Simulación',
                  fontsize=15, fontweight='bold', pad=12)
-    ax.legend(fontsize=11, framealpha=0.8, facecolor='#161B22', edgecolor='#30363D')
-    ax.grid(True, alpha=0.2)
-
+    ax.grid(True, alpha=0.6, color='#888888', linewidth=0.8, linestyle='-')
+    
+    # Rotar etiquetas del eje X para evitar superposicion y reducir tamaño de fuente
+    plt.setp(ax.get_xticklabels(), rotation=45, ha='right', fontsize=7)
+    
     plt.tight_layout()
-    filepath = FIGURES_DIR / 'radial_distribution.png'
+    filepath = FIGURES_DIR / 'energy_distribution.png'
     fig.savefig(filepath, dpi=DPI, bbox_inches='tight', facecolor=fig.get_facecolor())
     plt.close(fig)
-    print(f"   Distribución radial: {filepath}")
+    print(f"   Distribución de energías: {filepath}")
 
 
 def print_summary_statistics():
@@ -109,17 +125,11 @@ def print_summary_statistics():
     e_final = df_energy['energy'].iloc[-1]
     reduction = (e_init - e_final) / abs(e_init) * 100
 
-    d_final = compute_pairwise_distances(xf, yf)
-
     print(f"  Energía inicial:    {e_init:.6f}")
     print(f"  Energía final:      {e_final:.6f}")
     print(f"  Reducción:          {reduction:.2f}%")
-    print(f"  Dist. mínima (fin): {d_final.min():.4f}")
-    print(f"  Dist. media (fin):  {d_final.mean():.4f}")
-    print(f"  Dist. máxima (fin): {d_final.max():.4f}")
     print(f"  Cargas +1:          {np.sum(qf > 0)}")
     print(f"  Cargas -1:          {np.sum(qf < 0)}")
-    print(f"  Radio medio (fin):  {np.sqrt(xf**2 + yf**2).mean():.4f}")
     print()
 
 
@@ -129,8 +139,8 @@ def generate_analysis():
     print("  GENERANDO ANÁLISIS ESTADÍSTICO")
     print("  \n")
     print_summary_statistics()
-    plot_distance_histogram()
-    plot_radial_distribution()
+    plot_energy_comparison_histogram()
+    plot_energy_distribution()
 
 
 if __name__ == '__main__':

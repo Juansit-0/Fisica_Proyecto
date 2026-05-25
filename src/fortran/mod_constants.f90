@@ -63,8 +63,9 @@ module mod_constants
     real(dp) :: L_DOMAIN     = 10.0_dp  ! Medio-lado del dominio [-L, L]²
     real(dp) :: DELTA_MOVE   = 0.25_dp  ! Tamaño máximo del paso aleatorio
     integer  :: MAX_ITER     = 500000   ! Iteraciones máximas
-    integer  :: SAVE_EVERY   = 100      ! Guardar configuración cada N aceptaciones
+    integer  :: SAVE_EVERY   = 1        ! Guardar configuración cada N aceptaciones
     integer  :: PRINT_EVERY  = 10000    ! Imprimir progreso cada N iteraciones
+    integer  :: GRID_RESOLUTION = 50   ! Puntos por lado de la malla
 
     ! Modo de cargas:
     !   1 = solo positivas (+1)

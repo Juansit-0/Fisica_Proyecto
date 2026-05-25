@@ -14,7 +14,7 @@ from pathlib import Path
 from config import (FRAMES_DIR, VIDEOS_DIR, ENERGY_LOG,
                     COLOR_POSITIVE, COLOR_NEGATIVE, MARKER_SIZE,
                     MARKER_EDGE_COLOR, MARKER_EDGE_WIDTH,
-                    L_DOMAIN, VIDEO_FPS, MATPLOTLIB_STYLE)
+                    L_DOMAIN, GRID_RESOLUTION, VIDEO_FPS, MATPLOTLIB_STYLE)
 from data_loader import load_all_configurations, get_positions_and_charges
 
 
@@ -48,19 +48,28 @@ def generate_frame(df, frame_number, config_number, energy=None, total_configs=0
     ax.set_xlabel('x', fontsize=11)
     ax.set_ylabel('y', fontsize=11)
     ax.set_title('Evolución del Sistema de Cargas', fontsize=13, fontweight='bold', pad=10)
-    ax.grid(True, alpha=0.15)
+    
+    # Configurar ticks de malla basados en GRID_RESOLUTION
+    grid_spacing = (2.0 * L_DOMAIN) / (GRID_RESOLUTION - 1)
+    ticks = np.arange(-L_DOMAIN, L_DOMAIN + grid_spacing, grid_spacing)
+    ax.set_xticks(ticks)
+    ax.set_yticks(ticks)
+    ax.grid(True, alpha=0.6, color='#888888', linewidth=0.8, linestyle='-')
+    
+    # Rotar etiquetas del eje X para evitar superposicion y reducir tamaño de fuente
+    plt.setp(ax.get_xticklabels(), rotation=45, ha='right', fontsize=7)
 
     info = f'Config #{config_number}'
     if energy is not None:
         info += f'\nU = {energy:.4f}'
     if total_configs > 0:
         info += f'\nProgreso: {(frame_number+1)/total_configs*100:.0f}%'
-    ax.text(0.02, 0.98, info, transform=ax.transAxes, fontsize=9,
-            verticalalignment='top', color='#F0E68C', fontweight='bold',
-            bbox=dict(boxstyle='round,pad=0.4', facecolor='#161B22',
-                      edgecolor='#30363D', alpha=0.9))
-    ax.legend(loc='upper right', fontsize=9, framealpha=0.8,
-              facecolor='#161B22', edgecolor='#30363D')
+    ax.text(0.02, 0.98, info, transform=ax.transAxes, fontsize=7,
+            verticalalignment='top', color='#000000', fontweight='bold',
+            bbox=dict(boxstyle='round,pad=0.4', facecolor='#FFFFFF',
+                      edgecolor='#333333', alpha=0.9))
+    ax.legend(loc='upper right', fontsize=7, framealpha=0.8,
+              facecolor='#FFFFFF', edgecolor='#333333')
 
     plt.tight_layout()
     frame_path = FRAMES_DIR / f'frame_{frame_number:06d}.png'

@@ -91,8 +91,8 @@ def plot_potential_heatmap():
     # Colorbar
     cbar = plt.colorbar(im, ax=ax, label='Potencial Eléctrico V(x,y)',
                         shrink=0.85, pad=0.02)
-    cbar.ax.yaxis.label.set_color('#C9D1D9')
-    cbar.ax.tick_params(colors='#8B949E')
+    cbar.ax.yaxis.label.set_color('#000000')
+    cbar.ax.tick_params(colors='#000000')
     
     # Superponer posiciones de cargas
     pos_mask = q > 0
@@ -100,11 +100,11 @@ def plot_potential_heatmap():
     
     if np.any(pos_mask):
         ax.scatter(x[pos_mask], y[pos_mask], c=COLOR_POSITIVE, s=50,
-                   edgecolors='white', linewidths=1.0, zorder=10,
+                   edgecolors='black', linewidths=1.0, zorder=10,
                    marker='o', label='+1')
     if np.any(neg_mask):
         ax.scatter(x[neg_mask], y[neg_mask], c=COLOR_NEGATIVE, s=50,
-                   edgecolors='white', linewidths=1.0, zorder=10,
+                   edgecolors='black', linewidths=1.0, zorder=10,
                    marker='s', label='−1')
     
     ax.set_xlim(-L_DOMAIN, L_DOMAIN)
@@ -114,8 +114,18 @@ def plot_potential_heatmap():
     ax.set_ylabel('y', fontsize=13)
     ax.set_title('Mapa de Calor — Potencial Eléctrico V(x,y)',
                  fontsize=15, fontweight='bold', pad=12)
-    ax.legend(loc='upper right', fontsize=10, framealpha=0.8,
-              facecolor='#161B22', edgecolor='#30363D')
+    
+    # Configurar ticks de malla basados en GRID_RESOLUTION
+    grid_spacing = (2.0 * L_DOMAIN) / (GRID_RESOLUTION - 1)
+    ticks = np.arange(-L_DOMAIN, L_DOMAIN + grid_spacing, grid_spacing)
+    ax.set_xticks(ticks)
+    ax.set_yticks(ticks)
+    ax.grid(True, alpha=0.15, color='#CCCCCC', linewidth=0.3, linestyle='-')
+    ax.legend(loc='upper right', fontsize=7, framealpha=0.8,
+              facecolor='#FFFFFF', edgecolor='#333333')
+    
+    # Rotar etiquetas del eje X para evitar superposicion y reducir tamaño de fuente
+    plt.setp(ax.get_xticklabels(), rotation=45, ha='right', fontsize=7)
     
     plt.tight_layout()
     filepath = FIGURES_DIR / 'potential_heatmap.png'

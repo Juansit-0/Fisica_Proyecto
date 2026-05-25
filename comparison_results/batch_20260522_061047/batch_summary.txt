@@ -1,0 +1,15 @@
+=== RESUMEN DEL BATCH ===
+Timestamp: 20260522_061047
+Total simulaciones: 15
+Simulaciones exitosas: 15
+Simulaciones fallidas: 0
+Semillas exitosas: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+
+=== PARÁMETROS BASE ===
+n_particulas: 50
+l_dominio: 10.0
+delta_mov: 0.25
+max_iter: 500000
+charge_mode: 1
+save_every: 100
+print_every: 10000

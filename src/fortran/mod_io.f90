@@ -68,6 +68,7 @@ contains
         read(UNIT_PARAMS, *, iostat=ios) SAVE_EVERY
         read(UNIT_PARAMS, *, iostat=ios) PRINT_EVERY
         read(UNIT_PARAMS, *, iostat=ios) SEED_VALUE
+        read(UNIT_PARAMS, *, iostat=ios) GRID_RESOLUTION
 
         close(UNIT_PARAMS)
 
@@ -118,6 +119,7 @@ contains
         write(*,'(A,I6)')       '  Guardar cada    = ', SAVE_EVERY
         write(*,'(A,I6)')       '  Imprimir cada   = ', PRINT_EVERY
         write(*,'(A,I10)')      '  Semilla random   = ', SEED_VALUE
+        write(*,'(A,I6)')       '  Resolucion malla= ', GRID_RESOLUTION
         write(*,'(A,ES10.2)')   '  Softening eps   = ', EPSILON_SOFT
         write(*,'(A)')    '  =============================================='
 

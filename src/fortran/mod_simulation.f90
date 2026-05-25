@@ -115,23 +115,69 @@ contains
             ! Nuevas coordenadas propuestas
             x_new = sys%x(idx) + dx
             y_new = sys%y(idx) + dy
+            
+            ! Ajustar coordenadas a la malla
+            block
+                real(dp) :: grid_spacing
+                integer :: grid_idx
+                
+                grid_spacing = (2.0_dp * L_DOMAIN) / real(GRID_RESOLUTION - 1, dp)
+                
+                ! Ajustar x_new a la malla
+                grid_idx = nint((x_new + L_DOMAIN) / grid_spacing)
+                grid_idx = max(0, min(GRID_RESOLUTION - 1, grid_idx))
+                x_new = -L_DOMAIN + real(grid_idx, dp) * grid_spacing
+                
+                ! Ajustar y_new a la malla
+                grid_idx = nint((y_new + L_DOMAIN) / grid_spacing)
+                grid_idx = max(0, min(GRID_RESOLUTION - 1, grid_idx))
+                y_new = -L_DOMAIN + real(grid_idx, dp) * grid_spacing
+            end block
+            
+            ! -----------------------------------------------------------------
+            ! Paso 3: Garantizar que las coordenadas estén dentro del dominio (seguridad extra)
+            ! -----------------------------------------------------------------
+            x_new = max(-L_DOMAIN, min(L_DOMAIN, x_new))
+            y_new = max(-L_DOMAIN, min(L_DOMAIN, y_new))
+            
+            ! -----------------------------------------------------------------
+            ! Paso 4: VERIFICAR QUE NO HAYA SUPERPOSICIÓN CON NINGUNA OTRA CARGA
+            ! -----------------------------------------------------------------
+            block
+                logical :: overlaps
+                integer :: k
+                real(dp) :: dx_temp, dy_temp, dist_sq_temp
+                
+                overlaps = .false.
+                
+                do k = 1, sys%n
+                    ! Saltar la partícula que se está moviendo
+                    if (k == idx) cycle
+                    
+                    ! Calcular distancia al cuadrado
+                    dx_temp = x_new - sys%x(k)
+                    dy_temp = y_new - sys%y(k)
+                    dist_sq_temp = dx_temp*dx_temp + dy_temp*dy_temp
+                    
+                    if (dist_sq_temp < EPSILON_SOFT*EPSILON_SOFT) then
+                        overlaps = .true.
+                        exit
+                    end if
+                end do
+                
+                if (overlaps) then
+                    sys%rejected_moves = sys%rejected_moves + 1
+                    cycle  ! Rechazar movimiento por superposición
+                end if
+            end block
 
             ! -----------------------------------------------------------------
-            ! Paso 3: Verificar límites del dominio
-            ! -----------------------------------------------------------------
-            if (abs(x_new) > L_DOMAIN .or. abs(y_new) > L_DOMAIN) then
-                sys%out_of_bounds = sys%out_of_bounds + 1
-                sys%rejected_moves = sys%rejected_moves + 1
-                cycle  ! Rechazar y continuar con siguiente iteración
-            end if
-
-            ! -----------------------------------------------------------------
-            ! Paso 4: Calcular cambio en energía ΔU
+            ! Paso 5: Calcular cambio en energía ΔU
             ! -----------------------------------------------------------------
             delta_u = compute_delta_energy(sys, idx, x_new, y_new)
 
             ! -----------------------------------------------------------------
-            ! Paso 5: Criterio de aceptación (greedy / T=0)
+            ! Paso 6: Criterio de aceptación (greedy / T=0)
             ! -----------------------------------------------------------------
             if (delta_u < 0.0_dp) then
                 ! ACEPTAR: el movimiento reduce la energía

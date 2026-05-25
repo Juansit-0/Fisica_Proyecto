@@ -50,9 +50,9 @@ def plot_energy_vs_iteration():
     
     # Punto inicial y final
     ax.scatter([iterations[0]], [energy[0]], color='#FF6B6B', s=60,
-               zorder=10, edgecolors='white', linewidths=0.5)
+               zorder=10, edgecolors='black', linewidths=0.5)
     ax.scatter([iterations[-1]], [energy[-1]], color='#51CF66', s=60,
-               zorder=10, edgecolors='white', linewidths=0.5)
+               zorder=10, edgecolors='black', linewidths=0.5)
     
     # Etiquetas
     ax.set_xlabel('Movimientos Aceptados', fontsize=13)
@@ -60,17 +60,20 @@ def plot_energy_vs_iteration():
     ax.set_title('Convergencia de la Energía Electrostática',
                  fontsize=15, fontweight='bold', pad=12)
     
-    ax.grid(True, alpha=0.2)
-    ax.legend(loc='upper right', fontsize=10, framealpha=0.8,
-              facecolor='#161B22', edgecolor='#30363D')
+    ax.grid(True, alpha=0.6, color='#888888', linewidth=0.8, linestyle='-')
+    ax.legend(loc='upper right', fontsize=7, framealpha=0.8,
+              facecolor='#FFFFFF', edgecolor='#333333')
+    
+    # Rotar etiquetas del eje X para evitar superposicion y reducir tamaño de fuente
+    plt.setp(ax.get_xticklabels(), rotation=45, ha='right', fontsize=7)
     
     # Anotación de reducción
     reduction = ((energy[0] - energy[-1]) / abs(energy[0])) * 100
     ax.text(0.5, 0.95, f'Reducción: {reduction:.1f}%',
             transform=ax.transAxes, fontsize=12, ha='center',
             color='#51CF66', fontweight='bold',
-            bbox=dict(boxstyle='round,pad=0.4', facecolor='#161B22',
-                      edgecolor='#30363D', alpha=0.9))
+            bbox=dict(boxstyle='round,pad=0.4', facecolor='#FFFFFF',
+                      edgecolor='#333333', alpha=0.9))
     
     plt.tight_layout()
     filepath = FIGURES_DIR / 'energy_vs_iteration.png'
@@ -98,9 +101,12 @@ def plot_energy_log_scale():
         ax.set_ylabel('Energía U (escala log)', fontsize=13)
         ax.set_title('Convergencia Energética — Escala Logarítmica',
                      fontsize=15, fontweight='bold', pad=12)
-        ax.grid(True, alpha=0.2, which='both')
-        ax.legend(loc='upper right', fontsize=10, framealpha=0.8,
-                  facecolor='#161B22', edgecolor='#30363D')
+        ax.grid(True, alpha=0.6, color='#888888', linewidth=0.8, linestyle='-', which='both')
+        ax.legend(loc='upper right', fontsize=7, framealpha=0.8,
+                  facecolor='#FFFFFF', edgecolor='#333333')
+        
+        # Rotar etiquetas del eje X para evitar superposicion
+        plt.xticks(rotation=45, ha='right')
         
         plt.tight_layout()
         filepath = FIGURES_DIR / 'energy_log_scale.png'
@@ -129,9 +135,12 @@ def plot_acceptance_rate():
     ax.set_title('Evolución de la Tasa de Aceptación',
                  fontsize=15, fontweight='bold', pad=12)
     ax.set_ylim(0, 100)
-    ax.grid(True, alpha=0.2)
-    ax.legend(loc='upper right', fontsize=10, framealpha=0.8,
-              facecolor='#161B22', edgecolor='#30363D')
+    ax.grid(True, alpha=0.6, color='#888888', linewidth=0.8, linestyle='-')
+    ax.legend(loc='upper right', fontsize=7, framealpha=0.8,
+              facecolor='#FFFFFF', edgecolor='#333333')
+    
+    # Rotar etiquetas del eje X para evitar superposicion y reducir tamaño de fuente
+    plt.setp(ax.get_xticklabels(), rotation=45, ha='right', fontsize=7)
     
     plt.tight_layout()
     filepath = FIGURES_DIR / 'acceptance_rate.png'
