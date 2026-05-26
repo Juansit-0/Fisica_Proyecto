@@ -270,7 +270,7 @@ if 'DELTA_MOV' not in st.session_state:
 if 'MAX_ITER' not in st.session_state:
     st.session_state.MAX_ITER = 500000
 if 'SAVE_EVERY' not in st.session_state:
-    st.session_state.SAVE_EVERY = 100
+    st.session_state.SAVE_EVERY = 5
 if 'MODO_CARGA_TEXTO' not in st.session_state:
     st.session_state.MODO_CARGA_TEXTO = list(OPCIONES_MODOS.keys())[0]
 if 'EPSILON_SOFT' not in st.session_state:
@@ -359,11 +359,14 @@ with st.sidebar:
     
     SAVE_EVERY = st.slider(
         label="Frecuencia de registro",
-        min_value=10,
-        max_value=1000,
+        min_value=1,
+        max_value=200,
         value=st.session_state.SAVE_EVERY,
-        step=10,
-        help="Cada cuántos pasos se guarda un registro para el video",
+        step=1,
+        help=("Cada cuántos movimientos aceptados se guarda una "
+              "configuración. Valores bajos (1-10) generan muchos "
+              "frames y videos muy fluidos. Valores altos ahorran "
+              "espacio en disco pero requieren interpolación."),
         key="slider_save_every"
     )
     st.session_state.SAVE_EVERY = SAVE_EVERY
@@ -467,10 +470,11 @@ CURRENT_DATA_OUTPUT = DATA_OUTPUT
 # PESTAÑAS PRINCIPALES (MEJORADAS)
 #-------------------------------------------------------------------------------
 
-tab1, tab2, tab3, tab4 = st.tabs([
-    "Resultados Visuales", 
-    "Análisis del Experimento", 
+tab1, tab2, tab3, tab_phet, tab4 = st.tabs([
+    "Resultados Visuales",
+    "Análisis del Experimento",
     "Comparación de Simulaciones",
+    "Laboratorio Interactivo",
     "Ayuda y Conceptos"
 ])
 
@@ -787,108 +791,166 @@ with tab3:
                 #-------------------------------------------------------------------
                 with tab_comparacion:
                     st.subheader("Comparación de Todas las Simulaciones")
-                    
-                    # Recolectar datos de todas las simulaciones
-                    datos_simulaciones = []
-                    for sim_dir in simulaciones:
-                        data_dir = sim_dir / "data"
-                        energy_log = data_dir / "energy_log.csv"
-                        if energy_log.exists():
-                            df = pd.read_csv(energy_log)
-                            seed = int(sim_dir.name.replace("simulacion_seed_", ""))
-                            datos_simulaciones.append({
-                                "seed": seed,
-                                "e_inicial": df['energy'].iloc[0],
-                                "e_final": df['energy'].iloc[-1],
-                                "iteraciones": len(df)
-                            })
-                    
-                    if datos_simulaciones:
-                        # Crear DataFrame para la comparación
-                        df_comparacion = pd.DataFrame(datos_simulaciones)
-                        df_comparacion = df_comparacion.sort_values("seed")
-                        
-                        # Mostrar tabla de resultados
-                        st.markdown("### Tabla de Resultados")
-                        st.dataframe(df_comparacion, use_container_width=True)
-                        
-                        st.markdown("---")
-                        
-                        # Gráfico de comparación de energías finales
-                        st.markdown("### Gráfico: Energías Finales por Semilla")
-                        import matplotlib.pyplot as plt
-                        
-                        fig, ax = plt.subplots(figsize=(14, 8))
-                        
-                        # Crear gráfico de barras con valores exactos
-                        barras = ax.bar(
-                            [str(s) for s in df_comparacion["seed"]], 
-                            df_comparacion["e_final"], 
-                            color='#1f77b4',
-                            edgecolor='#0a3d62',
-                            linewidth=1.2
-                        )
-                        
-                        # Ajustar ejes a los rangos de los datos
-                        min_energia = df_comparacion["e_final"].min()
-                        max_energia = df_comparacion["e_final"].max()
-                        rango = max_energia - min_energia
-                        ax.set_ylim(bottom=min_energia - rango * 0.1, top=max_energia + rango * 0.1)
-                        
-                        # Configurar malla con subdivisiones pequeñas y precisas
-                        ax.grid(True, which='both', linestyle='--', linewidth=0.8, alpha=0.7, color='gray')
-                        ax.minorticks_on()
-                        ax.grid(True, which='minor', linestyle=':', linewidth=0.5, alpha=0.4, color='lightgray')
-                        
-                        # Etiquetas detalladas en cada punto de datos
-                        for barra, energia in zip(barras, df_comparacion["e_final"]):
-                            altura = barra.get_height()
-                            ax.text(
-                                barra.get_x() + barra.get_width()/2,
-                                altura + rango * 0.02,
-                                f"{energia:.6f}",
-                                ha='center',
-                                va='bottom',
-                                fontsize=7,
-                                fontweight='bold',
-                                bbox=dict(boxstyle='round,pad=0.2', facecolor='white', alpha=0.9, edgecolor='#1f77b4')
-                            )
-                        
-                        # Etiquetas y título
-                        ax.set_xlabel('Semilla', fontsize=12, fontweight='bold')
-                        ax.set_ylabel('Energía Final (valor exacto)', fontsize=12, fontweight='bold')
-                        ax.set_title('Comparación de Energías Finales por Semilla (Valores Brutos y Exactos)', fontsize=14, fontweight='bold', pad=20)
-                        ax.tick_params(axis='both', which='major', labelsize=10)
-                        plt.setp(ax.get_xticklabels(), rotation=45, ha='right', fontsize=7)
-                        plt.tight_layout()
-                        
-                        st.pyplot(fig)
-                        
-                        st.markdown("---")
-                        
-                        # Estadísticas resumidas (valores brutos)
-                        st.markdown("### Estadísticas de los Valores Brutos")
-                        col1, col2, col3 = st.columns(3)
-                        col1.metric("Energía Mínima", f"{df_comparacion['e_final'].min():.6f}")
-                        col2.metric("Energía Máxima", f"{df_comparacion['e_final'].max():.6f}")
-                        col3.metric("Rango Total", f"{(df_comparacion['e_final'].max() - df_comparacion['e_final'].min()):.6f}")
-                        
-                        st.markdown("---")
-                        
-                        # Conclusiones generales (solo valores brutos)
-                        st.markdown("### Conclusiones de las Mediciones Brutas")
-                        st.info(f"""
-                        **Resumen de {len(simulaciones)} mediciones independientes:**
-                        
-                        1. **Valores Registrados**: Se muestran todos los valores exactos de energía final (6 decimales)
-                        2. **Mínima Energía**: La simulación con semilla {df_comparacion.loc[df_comparacion['e_final'].idxmin(), 'seed']} registró {df_comparacion['e_final'].min():.6f}
-                        3. **Máxima Energía**: La simulación con semilla {df_comparacion.loc[df_comparacion['e_final'].idxmax(), 'seed']} registró {df_comparacion['e_final'].max():.6f}
-                        4. **Variabilidad**: La diferencia entre el valor máximo y mínimo es {(df_comparacion['e_final'].max() - df_comparacion['e_final'].min()):.6f}
-                        """)
+                    st.caption(
+                        "Las **curvas U(t) de todas las simulaciones del "
+                        "batch** se superponen en un único gráfico, "
+                        "junto con la media inter-simulaciones (línea negra) "
+                        "y la banda ±1σ (gris)."
+                    )
+
+                    # Cargar todas las simulaciones del batch con el módulo
+                    # dedicado plot_batch_comparison
+                    from plot_batch_comparison import (
+                        load_batch, per_sim_summary,
+                        render_batch_overlay, render_final_energy_violin,
+                    )
+
+                    sims_data = load_batch(batch_dir)
+                    n_sims = len(sims_data)
+
+                    if n_sims < 1:
+                        st.warning(
+                            "No hay simulaciones con energy_log.csv en este "
+                            "batch.")
                     else:
-                        st.warning("No hay datos suficientes para generar la comparación.")
+                        if n_sims < 15:
+                            st.warning(
+                                f"Solo se detectaron {n_sims} simulaciones "
+                                f"en este batch. El profesor pidió **mínimo "
+                                f"15**. Considera ejecutar el batch de "
+                                f"comparación completo."
+                            )
+                        else:
+                            st.success(
+                                f"Detectadas {n_sims} simulaciones — "
+                                f"cumple el mínimo de 15.")
+
+                        # ===== Gráfico maestro: overlay de curvas U(t) =====
+                        st.markdown(
+                            "### Gráfico Maestro — Convergencia Energética "
+                            "Comparada")
+                        cmap_sel = st.selectbox(
+                            "Paleta de colores",
+                            options=['turbo', 'viridis', 'plasma',
+                                       'tab20', 'rainbow'],
+                            index=0,
+                            key='batch_overlay_cmap',
+                        )
+                        mostrar_banda = st.checkbox(
+                            "Mostrar media e intervalo ±1σ inter-sims",
+                            value=True,
+                            key='batch_show_band',
+                        )
+                        fig_overlay = render_batch_overlay(
+                            sims_data,
+                            show_mean_band=mostrar_banda,
+                            cmap_name=cmap_sel,
+                        )
+                        st.pyplot(fig_overlay, use_container_width=True)
+                        import matplotlib.pyplot as _plt
+                        _plt.close(fig_overlay)
+
+                        st.markdown("---")
+
+                        # ===== Tabla resumen por simulación =====
+                        st.markdown("### Tabla de Estadísticas por Simulación")
+                        summary_df = per_sim_summary(sims_data)
+                        summary_show = summary_df.copy()
+                        summary_show['U_0'] = summary_show['U_0'].map(
+                            lambda v: f"{v:.4f}")
+                        summary_show['U_final'] = summary_show['U_final'].map(
+                            lambda v: f"{v:.4f}")
+                        summary_show['delta_U'] = summary_show['delta_U'].map(
+                            lambda v: f"{v:.4f}")
+                        summary_show['reduccion_%'] = summary_show[
+                            'reduccion_%'].map(lambda v: f"{v:.2f}")
+                        st.dataframe(summary_show,
+                                       use_container_width=True,
+                                       hide_index=True)
+
+                        st.markdown("---")
+
+                        # ===== Boxplot + barras de reducción =====
+                        st.markdown(
+                            "### Distribución de U_final y % Reducción")
+                        fig_summary = render_final_energy_violin(sims_data)
+                        st.pyplot(fig_summary, use_container_width=True)
+                        _plt.close(fig_summary)
+
+                        st.markdown("---")
+
+                        # ===== Métricas agregadas =====
+                        st.markdown("### Resumen Agregado del Batch")
+                        u_final = summary_df['U_final']
+                        reduc = summary_df['reduccion_%']
+                        m1, m2, m3, m4 = st.columns(4)
+                        m1.metric("U_final mínima", f"{u_final.min():.4f}",
+                                    help=f"seed = "
+                                         f"{summary_df.loc[u_final.idxmin(), 'seed']}")
+                        m2.metric("U_final máxima", f"{u_final.max():.4f}",
+                                    help=f"seed = "
+                                         f"{summary_df.loc[u_final.idxmax(), 'seed']}")
+                        m3.metric("U_final media ± σ",
+                                    f"{u_final.mean():.4f}",
+                                    delta=f"±{u_final.std():.4f}",
+                                    delta_color="off")
+                        m4.metric("Reducción media",
+                                    f"{reduc.mean():.2f} %",
+                                    delta=f"σ = {reduc.std():.2f}",
+                                    delta_color="off")
+
+                        # ===== Conclusión textual generada =====
+                        st.markdown("---")
+                        st.markdown("### Conclusiones del Batch")
+                        cv_final = (u_final.std() / abs(u_final.mean())) * 100
+                        if cv_final < 1.0:
+                            consistencia = ("muy alta — todas las "
+                                              "simulaciones convergen a "
+                                              "energías casi idénticas")
+                        elif cv_final < 5.0:
+                            consistencia = ("alta — las simulaciones "
+                                              "convergen a energías "
+                                              "similares con dispersión "
+                                              "moderada")
+                        else:
+                            consistencia = ("baja — hay alta variabilidad "
+                                              "entre las simulaciones, "
+                                              "indicando múltiples mínimos "
+                                              "locales accesibles")
+                        st.info(
+                            f"**Análisis de {n_sims} simulaciones "
+                            f"independientes:**\n\n"
+                            f"- Energía final promedio: "
+                            f"**{u_final.mean():.4f}** "
+                            f"(σ = {u_final.std():.4f}, "
+                            f"CV = {cv_final:.2f} %).\n"
+                            f"- Reducción promedio de U: "
+                            f"**{reduc.mean():.2f} %** "
+                            f"(σ = {reduc.std():.2f} %).\n"
+                            f"- Mejor minimización: seed "
+                            f"**{summary_df.loc[u_final.idxmin(), 'seed']}** "
+                            f"con U_final = "
+                            f"{u_final.min():.4f}.\n"
+                            f"- Peor minimización: seed "
+                            f"**{summary_df.loc[u_final.idxmax(), 'seed']}** "
+                            f"con U_final = {u_final.max():.4f}.\n"
+                            f"- Consistencia inter-simulación: "
+                            f"{consistencia}.\n\n"
+                            f"La condición inicial aleatoria determina "
+                            f"el mínimo local al que converge cada "
+                            f"simulación. Esta variabilidad refleja la "
+                            f"naturaleza del paisaje energético (no "
+                            f"convexo) del sistema de cargas."
+                        )
     else:
         st.info("Aún no hay batches de comparación ejecutados. Usa el botón de arriba para iniciar uno!")
+
+#-------------------------------------------------------------------------------
+# PESTAÑA EXTRA: LABORATORIO INTERACTIVO TIPO PhET
+#-------------------------------------------------------------------------------
+with tab_phet:
+    from phet_sandbox import run_sandbox_tab
+    run_sandbox_tab()
 
 #-------------------------------------------------------------------------------
 # PESTAÑA 4: AYUDA Y CONCEPTOS (DOCUMENTACIÓN INLINE)

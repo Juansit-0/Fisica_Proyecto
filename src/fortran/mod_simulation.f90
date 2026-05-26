@@ -115,30 +115,37 @@ contains
             ! Nuevas coordenadas propuestas
             x_new = sys%x(idx) + dx
             y_new = sys%y(idx) + dy
-            
-            ! Ajustar coordenadas a la malla
+
+            ! -----------------------------------------------------------------
+            ! Snap-to-grid: las cargas viven SOLO sobre los vértices
+            ! (xi, yi) de la malla GRID_RESOLUTION × GRID_RESOLUTION.
+            ! Cualquier coordenada propuesta se redondea al vértice más
+            ! cercano. Esto fuerza el "movimiento por vértices" visible
+            ! en los videos.
+            ! -----------------------------------------------------------------
             block
                 real(dp) :: grid_spacing
-                integer :: grid_idx
-                
+                integer  :: grid_idx
+
                 grid_spacing = (2.0_dp * L_DOMAIN) / real(GRID_RESOLUTION - 1, dp)
-                
-                ! Ajustar x_new a la malla
+
                 grid_idx = nint((x_new + L_DOMAIN) / grid_spacing)
                 grid_idx = max(0, min(GRID_RESOLUTION - 1, grid_idx))
                 x_new = -L_DOMAIN + real(grid_idx, dp) * grid_spacing
-                
-                ! Ajustar y_new a la malla
+
                 grid_idx = nint((y_new + L_DOMAIN) / grid_spacing)
                 grid_idx = max(0, min(GRID_RESOLUTION - 1, grid_idx))
                 y_new = -L_DOMAIN + real(grid_idx, dp) * grid_spacing
             end block
-            
+
             ! -----------------------------------------------------------------
-            ! Paso 3: Garantizar que las coordenadas estén dentro del dominio (seguridad extra)
+            ! Paso 3: Garantizar que las coordenadas estén dentro del dominio
             ! -----------------------------------------------------------------
-            x_new = max(-L_DOMAIN, min(L_DOMAIN, x_new))
-            y_new = max(-L_DOMAIN, min(L_DOMAIN, y_new))
+            if (x_new < -L_DOMAIN .or. x_new > L_DOMAIN .or. &
+                y_new < -L_DOMAIN .or. y_new > L_DOMAIN) then
+                sys%out_of_bounds = sys%out_of_bounds + 1
+                cycle
+            end if
             
             ! -----------------------------------------------------------------
             ! Paso 4: VERIFICAR QUE NO HAYA SUPERPOSICIÓN CON NINGUNA OTRA CARGA
@@ -195,6 +202,15 @@ contains
                 ! Registrar en log de energía
                 acceptance_rate = real(sys%accepted_moves, dp) / real(iter, dp)
                 call write_energy_log(iter, sys%accepted_moves, sys%total_energy, acceptance_rate)
+
+                ! Tope opcional de movimientos aceptados: si está
+                ! configurado, terminar la simulación al alcanzarlo.
+                if (MAX_ACCEPTED > 0 .and. sys%accepted_moves >= MAX_ACCEPTED) then
+                    write(*,'(A)') ''
+                    write(*,'(A,I0,A)') '  Tope de aceptados alcanzado (', &
+                        MAX_ACCEPTED, '). Finalizando simulacion.'
+                    exit
+                end if
             else
                 ! RECHAZAR: el movimiento no reduce la energía
                 sys%rejected_moves = sys%rejected_moves + 1

@@ -1,0 +1,15 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Streamlit GUI — Simulación de Cargas",
+      "runtimeExecutable": "/opt/homebrew/bin/python3",
+      "runtimeArgs": [
+        "-S",
+        "-c",
+        "import sys; sys.path.insert(0, '/Users/juansit0/Desktop/Proyecto_FisicaII/venv/lib/python3.14/site-packages'); import site; site.main(); from streamlit.web.cli import main as st_main; sys.argv = ['streamlit', 'run', '/Users/juansit0/Desktop/Proyecto_FisicaII/src/python/gui_app.py', '--server.port', '8502', '--server.headless', 'true', '--browser.gatherUsageStats', 'false']; st_main()"
+      ],
+      "port": 8502
+    }
+  ]
+}

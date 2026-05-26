@@ -39,6 +39,10 @@ BIN_DIR = bin
 PYTHON_DIR = src/python
 DATA_DIR = data/output
 
+# Intérprete Python: usar el del venv si existe, sino el del sistema.
+# Evita ModuleNotFoundError cuando matplotlib/pandas viven en el venv.
+PYTHON := $(shell if [ -x venv/bin/python3 ]; then echo venv/bin/python3; else echo python3; fi)
+
 # Archivos fuente (orden de compilación por dependencias)
 SRCS = $(SRC_DIR)/mod_constants.f90 \
        $(SRC_DIR)/mod_types.f90 \
@@ -110,14 +114,16 @@ run_sim: $(TARGET)
 visualize:
 	@echo ""
 	@echo "  Ejecutando pipeline de visualizacion..."
+	@echo "  Python: $(PYTHON)"
 	@echo ""
-	python3 $(PYTHON_DIR)/run_visualization.py
+	$(PYTHON) $(PYTHON_DIR)/run_visualization.py
 
 video:
 	@echo ""
 	@echo "  Generando video..."
+	@echo "  Python: $(PYTHON)"
 	@echo ""
-	python3 $(PYTHON_DIR)/video_generator.py
+	$(PYTHON) $(PYTHON_DIR)/video_generator.py
 
 # ============================================================================
 # Limpieza

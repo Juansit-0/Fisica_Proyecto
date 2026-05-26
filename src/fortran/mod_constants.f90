@@ -75,4 +75,10 @@ module mod_constants
     ! Semilla para generador aleatorio (0 = usar clock del sistema)
     integer  :: SEED_VALUE  = 0
 
+    ! Tope opcional de movimientos aceptados. Si > 0, la simulación
+    ! termina anticipadamente cuando se alcanzan tantas aceptaciones.
+    ! Útil para controlar la longitud del log de energía y los videos.
+    ! Valor 0 = sin tope (ejecuta hasta MAX_ITER).
+    integer  :: MAX_ACCEPTED = 0
+
 end module mod_constants

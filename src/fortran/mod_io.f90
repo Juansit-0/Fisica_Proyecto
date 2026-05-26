@@ -69,6 +69,10 @@ contains
         read(UNIT_PARAMS, *, iostat=ios) PRINT_EVERY
         read(UNIT_PARAMS, *, iostat=ios) SEED_VALUE
         read(UNIT_PARAMS, *, iostat=ios) GRID_RESOLUTION
+        ! Línea 10 (opcional): tope de movimientos aceptados.
+        ! Si el archivo no la trae, MAX_ACCEPTED queda en 0 (sin tope).
+        read(UNIT_PARAMS, *, iostat=ios) MAX_ACCEPTED
+        if (ios /= 0) MAX_ACCEPTED = 0
 
         close(UNIT_PARAMS)
 
@@ -120,6 +124,11 @@ contains
         write(*,'(A,I6)')       '  Imprimir cada   = ', PRINT_EVERY
         write(*,'(A,I10)')      '  Semilla random   = ', SEED_VALUE
         write(*,'(A,I6)')       '  Resolucion malla= ', GRID_RESOLUTION
+        if (MAX_ACCEPTED > 0) then
+            write(*,'(A,I10)')  '  Tope aceptados  = ', MAX_ACCEPTED
+        else
+            write(*,'(A)')      '  Tope aceptados  = sin tope'
+        end if
         write(*,'(A,ES10.2)')   '  Softening eps   = ', EPSILON_SOFT
         write(*,'(A)')    '  =============================================='
 
